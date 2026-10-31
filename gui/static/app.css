@@ -1,0 +1,217 @@
+/* キャラクター音声同期動画 GUI のデザイン（Gradio 5.50 / app.py の elem_id・elem_classes だけを使う）
+   - 白を基調、文字は黒〜濃いグレー
+   - 主要パネル：太さ 5px の枠線に沿って、虹色（赤→オレンジ→黄→緑→水色→青→紫）が約 6 秒で1周する
+   - 進捗バー：高さ 14px。長さ＝実際の進捗率（app.py が width を決める）、虹色の流れ＝装飾（CSS だけ。進捗とは独立）
+   - 1920×1080：主要な操作はスクロールなしで収まる。1366×768：画像と動画を小さくして収め、詳細は折りたたみ */
+:root {
+  --c-red: #ff3b30; --c-orange: #ff9500; --c-yellow: #ffcc00; --c-green: #34c759;
+  --c-cyan: #32d2f0; --c-blue: #1e6bff; --c-purple: #a94fe0;
+  --rb-stops: var(--c-red), var(--c-orange), var(--c-yellow), var(--c-green), var(--c-cyan), var(--c-blue), var(--c-purple), var(--c-red);
+  --panel-line: 5px;
+  --rb-period: 6s;
+  --ink: #1f2328;
+  --ink-sub: #4b535c;
+  --line-soft: #d0d7de;
+  --media-h: clamp(150px, calc(100vh - 690px), 400px);   /* 動画の欄の高さ：画面の高さに合わせる */
+  --img-h: calc(var(--media-h) + 10px);                    /* 左の画像の欄（右に名前・画像チェックを並べる） */
+}
+
+/* 枠の虹色を「線に沿って」回すための角度 --rb-angle は app.py の HEAD で @property として登録する
+   （Gradio が css_paths の @property を取り除くため。登録されないブラウザでは止まった虹色になる） */
+@keyframes rb-spin { to { --rb-angle: 360deg; } }
+/* 進捗バー：模様の幅 600px ぶん横にずらすと、最初と最後が同じ赤なのでつなぎ目なく循環する */
+@keyframes rb-slide { from { background-position: 0 0; } to { background-position: 600px 0; } }
+
+/* ---------- 全体 ---------- */
+body, .gradio-container, gradio-app { background: #ffffff !important; }
+.gradio-container { color: var(--ink) !important; max-width: 100% !important; padding: 8px 14px 6px !important; }
+#app-root, .gradio-container .contain { gap: 8px !important; }
+footer { display: none !important; }
+
+/* タイトル：1行に詰める */
+#app-title { margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
+#app-title > div { padding: 0 !important; }
+.title-line { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.title-line h1 { font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--ink); }
+.title-line h1 span { font-size: 0.85rem; font-weight: 500; color: var(--ink-sub); margin-left: 6px; }
+.title-line p { margin: 0; font-size: 0.84rem; color: var(--ink-sub); flex: 1 1 380px; }
+.gpu-badge { font-size: 0.8rem; font-weight: 600; color: #6e4b00; background: #fff4d6; border: 1px solid #e8c56a; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+
+/* ---------- 虹色の枠のパネル ---------- */
+/* 外側は虹色（パディング＝線の太さ）、内側は白。conic-gradient の角度を回すので、色が枠線に沿って流れる */
+.rb-panel {
+  border-radius: 16px !important;
+  padding: var(--panel-line) !important;
+  background: conic-gradient(from var(--rb-angle, 0deg), var(--rb-stops)) !important;
+  animation: rb-spin var(--rb-period) linear infinite;
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+  gap: 0 !important;
+}
+.rb-panel > .rb-inner {
+  background: #ffffff !important;
+  border-radius: 11px !important;
+  padding: 10px 14px !important;
+  gap: 7px !important;
+  height: 100%;
+  flex-grow: 1;
+}
+#main-row { gap: 12px !important; align-items: stretch !important; }
+
+/* 見出し */
+.sec-head { margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
+.sec-head h3 { font-size: 1rem !important; font-weight: 700 !important; margin: 0 !important; color: var(--ink) !important; }
+
+/* 文字の色（Gradio の既定の薄いグレーより濃くする） */
+.gradio-container label span, .gradio-container [data-testid="block-info"] { color: var(--ink) !important; }
+.gradio-container .prose, .gradio-container .prose p, .gradio-container .prose li { color: var(--ink) !important; }
+
+/* ---------- 左：画像と音声 ---------- */
+#char-image { min-height: 0 !important; }
+#char-image .image-container, #char-image .upload-container, #char-image .image-frame { height: var(--img-h) !important; min-height: 0 !important; }
+#char-image .image-frame { width: 100% !important; display: flex !important; justify-content: center; align-items: center; }
+#char-image .image-frame img { height: 100% !important; width: 100% !important; max-height: calc(var(--img-h) - 44px) !important; object-fit: contain; }
+#img-row { gap: 10px !important; align-items: flex-start !important; }
+#img-side { gap: 6px !important; }
+#char-audio { min-height: 0 !important; }
+#img-check, #aud-info { min-height: 0 !important; }
+#img-check p, #aud-info p, #img-check li { font-size: 0.82rem !important; margin: 1px 0 !important; line-height: 1.38; }
+#img-check ul { margin: 0 0 0 1.1em !important; }
+.hint, .hint p { font-size: 0.82rem !important; color: var(--ink-sub) !important; line-height: 1.35; margin: 0 !important; min-height: 0 !important; }
+
+/* ---------- 右：動画・設定・操作 ---------- */
+#out-top { gap: 14px !important; align-items: stretch !important; }
+#col-video, #col-settings { gap: 7px !important; }
+#out-video { min-height: 0 !important; }
+#out-video .wrap, #out-video .empty, #out-video [data-testid="video"], #out-video video { height: var(--media-h) !important; max-height: var(--media-h) !important; }
+#out-video video { object-fit: contain; background: #f6f8fa; }
+#set-row { gap: 8px !important; }
+
+/* ボタン：大きく、役割で区別する */
+#btn-row { gap: 8px !important; }
+#btn-row button { white-space: nowrap !important; }
+#btn-generate, #btn-row button { min-height: 48px !important; font-size: 0.98rem !important; padding: 4px 8px !important; font-weight: 700 !important; border-radius: 10px !important; }
+#btn-generate { background: #1f6feb !important; color: #ffffff !important; border: 2px solid #1f6feb !important; }
+#btn-generate:disabled { background: #e7ecf3 !important; border: 2px dashed #9aa7b8 !important; color: #4b535c !important; cursor: not-allowed; opacity: 1 !important; }
+#btn-test { background: #ffffff !important; color: var(--ink) !important; border: 2px solid #57606a !important; }
+#btn-test:disabled { color: #8c959f !important; border-color: #c9d1d9 !important; cursor: not-allowed; }
+#btn-stop { background: #ffffff !important; color: #b42318 !important; border: 2px solid #d92d20 !important; }
+#btn-stop:disabled { color: #c9928c !important; border-color: #ecc6c2 !important; cursor: not-allowed; }
+#allow-unverified { opacity: 0.85; }
+
+/* ---------- 処理状況（大きく、見やすく） ---------- */
+#status-panel { min-height: 0 !important; }
+/* 1秒ごとの更新中に Gradio が薄く表示する（pending）のを止め、常に読める濃さにする */
+#status-panel, #status-panel.pending, #status-panel .pending, #status-box, #out-path { opacity: 1 !important; }
+.st-panel { border: 1px solid var(--line-soft); border-radius: 12px; padding: 10px 14px 8px; background: #fbfcfd; }
+.st-head { display: flex; align-items: center; gap: 12px; }
+.st-title { font-size: 1rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.st-badge { font-size: 0.95rem; font-weight: 700; padding: 3px 12px; border-radius: 999px; background: #eaeef2; color: var(--ink); white-space: nowrap; }
+.st-running .st-badge, .st-queued .st-badge { background: #ddeaff; color: #0b3d91; }
+.st-done .st-badge { background: #dcf5e3; color: #0f5c2a; }
+.st-failed .st-badge, .st-aborted .st-badge { background: #fde2e0; color: #8a1c12; }
+.st-stopped .st-badge { background: #fff1d6; color: #6e4b00; }
+.st-msg { flex: 1; font-size: 0.95rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-pct { font-size: 2.2rem; font-weight: 800; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.st-pct small { font-size: 1.1rem; font-weight: 700; margin-left: 1px; }
+.st-sub { font-size: 0.78rem; color: var(--ink-sub); margin-top: 3px; }
+.st-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 14px; margin-top: 6px; }
+.st-grid .cell { display: flex; flex-direction: column; border-left: 3px solid var(--line-soft); padding-left: 8px; }
+.st-grid .cell span { font-size: 0.76rem; color: var(--ink-sub); }
+.st-grid .cell b { font-size: 1.08rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.st-src { font-size: 0.72rem; color: var(--ink-sub); margin-top: 4px; text-align: right; }
+.st-warn { margin: 4px 0 0 1.1em; padding: 0; font-size: 0.8rem; color: #8a1c12; }
+
+/* 進捗バー：高さ 14px。width（進捗率）は app.py、虹色の流れは下のアニメーション */
+.rb-progress { margin: 8px 0 2px; }
+.rb-progress .track { position: relative; height: 14px; border-radius: 8px; background: #e9ecef; overflow: hidden; border: 1px solid #c9d1d9; }
+.rb-progress .fill {
+  height: 100%; border-radius: 8px;
+  background-image: linear-gradient(90deg, var(--rb-stops)); background-size: 600px 100%; background-repeat: repeat-x;
+  animation: rb-slide var(--rb-period) linear infinite;
+  transition: width 0.5s ease;
+}
+
+/* 保存先・詳細ログ・履歴 */
+#out-path-row { gap: 10px !important; align-items: center !important; flex-wrap: nowrap !important; }
+#out-path-label { flex: 0 0 auto !important; min-width: 0 !important; width: auto !important; padding: 0 !important; }
+.out-path-label { font-size: 0.9rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
+#out-path textarea, #out-path input { font-size: 0.86rem !important; color: var(--ink) !important; border: 1px solid var(--line-soft) !important; border-radius: 8px !important; background: #f6f8fa !important; }
+#status-box textarea { font-size: 0.82rem !important; line-height: 1.38 !important; color: var(--ink) !important; font-family: ui-monospace, Consolas, monospace !important; }
+#bottom-row { gap: 12px !important; }
+#log-acc, #history-acc { border: 2px solid var(--line-soft) !important; border-radius: 12px !important; }
+
+/* ---------- 詰める（1画面に収めるため） ---------- */
+main.app, .gradio-container main.fillable { padding-top: 0 !important; padding-bottom: 0 !important; }
+.rb-inner .block:not(.rb-panel):not(#status-panel) { padding: 6px 10px !important; }
+.rb-inner .block label > span[data-testid="block-info"], .rb-inner .block .label-wrap span { margin-bottom: 3px !important; }
+.rb-inner input[type="text"], .rb-inner input[type="number"], .rb-inner textarea { padding: 6px 10px !important; min-height: 0 !important; }
+/* 音声：未選択時のアップロード欄（既定 216px）を低くする。選択後は波形と再生ボタン */
+#char-audio .component-wrapper { padding: 4px 10px 2px !important; }
+#char-audio .icon-button-wrapper.top-panel { position: absolute !important; top: 2px; right: 2px; z-index: 5; }
+#char-audio .audio-container { position: relative; }
+#char-audio .controls { margin-top: 0 !important; }
+#char-audio button.center.boundedheight { height: auto !important; min-height: 0 !important; max-height: 120px !important; }
+#char-audio button.center.boundedheight .wrap { height: 110px !important; min-height: 0 !important; padding-top: 22px !important; justify-content: center; }
+#acc-preview, #acc-settings { padding: 4px 10px !important; }
+
+/* ---------- 画面の高さ・幅に合わせる ---------- */
+/* 1366×768 など低い画面：説明を短くし、余白を詰める */
+@media (max-height: 820px) {
+  .title-line p { display: none; }
+  .rb-panel > .rb-inner { padding: 8px 12px !important; gap: 5px !important; }
+  #btn-generate, #btn-row button { min-height: 40px !important; }
+  .st-pct { font-size: 1.8rem; }
+  .st-panel { padding: 8px 12px 6px; }
+  #panel-input .hint, #btn-hint, .st-sub, .st-src { display: none !important; }
+  .title-line h1 { font-size: 1.1rem; }
+  .sec-head h3 { font-size: 0.95rem !important; }
+  .st-grid { gap: 2px 12px; margin-top: 4px; }
+  .st-grid .cell b { font-size: 0.98rem; }
+  .rb-progress { margin: 5px 0 0; }
+  #face-crop .info, #face-crop [data-testid="block-info"] + span, #face-crop .info-text { display: none !important; }
+  #img-check p, #aud-info p, #img-check li { font-size: 0.78rem !important; line-height: 1.3; }
+}
+/* 狭い画面（1100px 未満）：1カラム。1画面に無理に収めない */
+@media (max-width: 1100px) {
+  #main-row, #out-top { flex-direction: column !important; }
+  #main-row > div, #out-top > div { width: 100% !important; min-width: 0 !important; }
+  :root { --media-h: 42vh; }
+  .st-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* 動きを減らす設定（Windows の「アニメーション効果」オフなど）：虹色は止めて表示だけ残す */
+@media (prefers-reduced-motion: reduce) {
+  .rb-panel, .rb-progress .fill { animation: none !important; }
+  .rb-progress .fill { transition: none !important; }
+}
+
+/* ---------- GPU 生成モード（2026-10-31 追加） ---------- */
+.gpu-badge.gpu-off { color: #4b535c; background: #eef1f4; border-color: #c9d1d9; }
+.gpu-badge.gpu-reh { color: #6e4b00; background: #fff4d6; border-color: #e8c56a; }
+.gpu-badge.gpu-on  { color: #0b3d91; background: #ddeaff; border-color: #8fb3f5; }
+/* 確認パネル：生成の前に、長さ・未検証かどうか・開始前の条件を見せる */
+#gpu-confirm { border: 2px solid #1f6feb !important; border-radius: 12px !important; background: #f5f9ff !important; padding: 8px 10px !important; }
+#gpu-confirm-text, #gpu-confirm-text p, #gpu-confirm-text li, #gpu-confirm-text td, #gpu-confirm-text th { font-size: 0.8rem !important; line-height: 1.35 !important; }
+#gpu-confirm-text h4 { margin: 0 0 4px 0 !important; font-size: 0.95rem !important; }
+#gpu-confirm-text table { margin: 4px 0 !important; }
+#gpu-confirm-text td, #gpu-confirm-text th { padding: 1px 6px !important; }
+#btn-confirm-gpu { background: #1f6feb !important; color: #fff !important; border: 2px solid #1f6feb !important; font-weight: 700 !important; min-height: 42px !important; }
+#btn-cancel-gpu { background: #fff !important; color: var(--ink) !important; border: 2px solid #8c959f !important; min-height: 42px !important; }
+
+/* ---------- 完成動画のミュート・解除ボタン（2026-10-31 追加） ---------- */
+#av-mute { min-height: 0 !important; padding: 0 !important; }
+.av-mute-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+#av-mute-btn {
+  min-height: 40px; min-width: 150px; padding: 6px 16px; border-radius: 999px; cursor: pointer;
+  font-size: 1rem; font-weight: 700; line-height: 1.2;
+  background: #ffffff; color: #0f5c2a; border: 2px solid #34c759;
+}
+#av-mute-btn:hover:not(:disabled) { background: #effaf2; }
+#av-mute-btn.muted { background: #fff1f0; color: #b42318; border-color: #d92d20; }
+#av-mute-btn.muted:hover:not(:disabled) { background: #ffe4e1; }
+#av-mute-btn:disabled { color: #8c959f; border-color: #c9d1d9; background: #f6f8fa; cursor: not-allowed; }
+#av-mute-btn:focus-visible { outline: 3px solid #1e6bff; outline-offset: 2px; }
+.av-mute-note { font-size: 0.78rem; color: var(--ink-sub); }
+@media (max-width: 600px) { #av-mute-btn { width: 100%; min-height: 44px; } }
+@media (max-height: 820px) { .av-mute-note { display: none; } #av-mute-btn { min-height: 36px; } }

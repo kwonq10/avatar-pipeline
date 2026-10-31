@@ -1,0 +1,2 @@
+# Avatar-Pipeline GUI 専用環境（FlashHead の 83 個とは別の venv）。torch・モデル類は入れない（GUI は GPU を使わない）
+gradio==5.50.0

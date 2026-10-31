@@ -1,0 +1,104 @@
+diff --git a/flash_head/src/modules/flash_head_model.py b/flash_head/src/modules/flash_head_model.py
+index 989cd7c..33778fe 100755
+--- a/flash_head/src/modules/flash_head_model.py
++++ b/flash_head/src/modules/flash_head_model.py
+@@ -8,12 +8,17 @@ from diffusers import ModelMixin
+ from diffusers.configuration_utils import ConfigMixin, register_to_config
+ import torch.cuda.amp as amp
+ import torch.distributed as dist
+-from xfuser.core.distributed import (
+-    get_sequence_parallel_rank,
+-    get_sequence_parallel_world_size,
+-    get_sp_group,
+-)
+-from xfuser.core.long_ctx_attention import xFuserLongContextAttention
++# [Avatar-Pipeline patch FH-01] Windows / 1GPU では xfuser を入れない。use_usp=False（dist 未初期化）では下の名前は呼ばれない
++try:
++    from xfuser.core.distributed import (
++        get_sequence_parallel_rank,
++        get_sequence_parallel_world_size,
++        get_sp_group,
++    )
++    from xfuser.core.long_ctx_attention import xFuserLongContextAttention
++except ImportError:
++    get_sequence_parallel_rank = get_sequence_parallel_world_size = get_sp_group = None
++    xFuserLongContextAttention = None
+ try:
+     import flash_attn_interface
+     FLASH_ATTN_3_AVAILABLE = True
+diff --git a/flash_head/src/pipeline/flash_head_pipeline.py b/flash_head/src/pipeline/flash_head_pipeline.py
+index 6d0b757..dbe9950 100644
+--- a/flash_head/src/pipeline/flash_head_pipeline.py
++++ b/flash_head/src/pipeline/flash_head_pipeline.py
+@@ -16,8 +16,9 @@ from flash_head.utils.utils import match_and_blend_colors_torch, resize_and_cent
+ from flash_head.utils.facecrop import process_image
+ 
+ # compile models to speedup inference
+-COMPILE_MODEL = True
+-COMPILE_VAE = True
++# [Avatar-Pipeline patch FH-02] Windows では Triton が無いので torch.compile を使わない（速度だけが下がる）
++COMPILE_MODEL = False
++COMPILE_VAE = False
+ # use parallel vae to speedup decode/encode, only support WanVAE
+ USE_PARALLEL_VAE = True
+ 
+@@ -108,7 +109,13 @@ class FlashHeadPipeline:
+             elif self.model_type == "pro":
+                 model_dir = os.path.join(checkpoint_dir, "Model_Pro")
+         
+-        self.model = WanModelAudioProject.from_pretrained(model_dir)
++        # [Avatar-Pipeline patch FH-03] 公式は from_pretrained で fp32（約6GB）を CPU に読み込んでから GPU に移す。
++        # RAM 16GB の Windows ではコミットが不足しやすい（OS error 1455）ので、1テンソルずつ GPU（param_dtype）へ送って assign する
++        if os.environ.get("FLASHHEAD_LOWMEM_LOAD", "1") == "1":
++            from flash_head.utils.lowmem_load import load_model_lowmem
++            self.model = load_model_lowmem(WanModelAudioProject, model_dir, self.device, self.param_dtype)
++        else:
++            self.model = WanModelAudioProject.from_pretrained(model_dir)
+         self.model.eval().requires_grad_(False)
+         self.model.to(device=self.device, dtype=self.param_dtype)
+ 
+diff --git a/flash_head/utils/lowmem_load.py b/flash_head/utils/lowmem_load.py
+new file mode 100644
+index 0000000..c2694d4
+--- /dev/null
++++ b/flash_head/utils/lowmem_load.py
+@@ -0,0 +1,39 @@
++# [Avatar-Pipeline patch FH-03] diffusers のモデルを、CPU にモデル全体を作らずに GPU へ読み込む。
++#   1. accelerate.init_empty_weights でパラメータだけ meta にして作る（self.freqs のような普通のテンソルは通常どおり作られる）
++#   2. safetensors のヘッダーを直接読み、テンソルを1個ずつファイルから読んで、すぐ device / dtype に変換する
++#      （CPU 上にあるのは常に1テンソル分。最大は audio_proj.proj1_vf.weight の 151MB）
++#   3. load_state_dict(strict=True, assign=True) で GPU 上のテンソルをそのままパラメータにする
++import json, os, struct
++import torch
++from accelerate import init_empty_weights
++
++_DT = {"F32": torch.float32, "F16": torch.float16, "BF16": torch.bfloat16, "I64": torch.int64, "I32": torch.int32}
++
++def _read_header(path):
++    with open(path, "rb") as f:
++        n = struct.unpack("<Q", f.read(8))[0]
++        hdr = json.loads(f.read(n))
++    hdr.pop("__metadata__", None)
++    return hdr, 8 + n
++
++def load_model_lowmem(cls, model_dir, device, dtype):
++    config = cls.load_config(model_dir)
++    with init_empty_weights():
++        model = cls.from_config(config)
++    path = os.path.join(model_dir, "diffusion_pytorch_model.safetensors")
++    hdr, base = _read_header(path)
++    sd = {}
++    with open(path, "rb") as f:
++        for k, h in sorted(hdr.items(), key=lambda kv: kv[1]["data_offsets"][0]):
++            b, e = h["data_offsets"]
++            f.seek(base + b)
++            buf = bytearray(f.read(e - b))
++            t = torch.frombuffer(buf, dtype=_DT[h["dtype"]]).reshape(h["shape"]) if e > b else torch.empty(h["shape"], dtype=_DT[h["dtype"]])
++            sd[k] = t.to(device=device, dtype=dtype if t.is_floating_point() else t.dtype)
++            del t, buf
++    model.load_state_dict(sd, strict=True, assign=True)
++    del sd
++    left = [n for n, p in list(model.named_parameters()) + list(model.named_buffers()) if p.device.type == "meta"]
++    if left:
++        raise RuntimeError(f"meta のまま残った: {left[:5]}")
++    return model

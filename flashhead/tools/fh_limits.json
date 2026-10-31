@@ -1,0 +1,34 @@
+{
+ "_note": "FlashHead ワーカーの長さの扱い。検証済みかどうかはフレーム数（gpu_verified_max_frames）で判定する（fh_length.py）。超える音声の GPU 生成は、job.json の allow_unverified_length=true（ユーザーの明示的な確認）が無いと拒否する。gpu_verified_max_seconds は実測の WAV の長さ（表示用）。値は実機テストの結果でだけ更新する",
+ "gpu_verified_max_seconds": 60.0,
+ "gpu_verified_max_frames": 1500,
+ "gpu_verified_history": [
+  {
+   "date": "2026-10-30",
+   "test": "T1",
+   "seconds": 4.0,
+   "job": "20261030-221116_fh_gpu"
+  },
+  {
+   "date": "2026-10-31",
+   "test": "T1c",
+   "seconds": 8.333061,
+   "job": "20261031-134405_fh_gpu",
+   "note": "技術検査（7項目）に合格して更新。日本語の会話音声。WAV 367,488 サンプル / 44,100Hz = 8.333061秒・208 フレーム（10-31 14:40 に 3桁に丸めた 8.333 を実測値へ訂正）。リップシンクの品質評価（ユーザーの再生確認）は未完了",
+   "frames": 208
+  },
+  {
+   "date": "2026-10-31",
+   "test": "T2",
+   "seconds": 60.0,
+   "frames": 1500,
+   "chunks": 54,
+   "job": "20261031-154143_fh_gpu",
+   "note": "技術検査（7項目）に合格して更新（ユーザー承認）。日本語の会話音声 t2_ja_60s.wav・avatar_bob.png・seed 42・顔の切り出しオン。WAV 2,646,000 サンプル / 44,100Hz = 60.000秒。全体 876.2秒・VRAM 最大 8,490MiB・ジョブのコミット 10.29GiB・GPU 最高 82.09℃（停止の基準 83℃ まで約 0.9℃）。未確認：発音単位のリップシンク精度・60秒間の表情と頭の動きの自然さ・別の画像や音声での品質・120秒以上の連続生成"
+  }
+ ],
+ "dry_run_max_seconds": 1200,
+ "gpu_sec_per_chunk_measured": 16.5,
+ "gpu_startup_sec_measured": 105,
+ "timeout_margin": 1.5
+}

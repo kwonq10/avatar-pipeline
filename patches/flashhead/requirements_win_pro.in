@@ -1,0 +1,22 @@
+# SoulX-FlashHead Pro を Windows 11 で動かすための依存関係（案）。公式 requirements.txt から次を外した：
+#   nvidia-nccl-cu12（Linux 専用・複数GPU用） / xformers（Lite の LTX 経路だけで使う） / decord（コードで未使用）
+#   gradio・flask（推論スクリプトに不要） / xfuser（1GPU では呼ばれない。import を保護する修正で回避）
+torch==2.7.1
+torchvision==0.22.1
+diffusers>=0.34.0
+transformers==4.57.3
+tokenizers>=0.20.3
+accelerate>=1.8.1
+opencv-python>=4.12.0.88
+imageio
+imageio-ffmpeg
+easydict
+ftfy
+scikit-image
+loguru
+pyloudnorm
+librosa
+mediapipe==0.10.9
+einops
+safetensors
+pyyaml

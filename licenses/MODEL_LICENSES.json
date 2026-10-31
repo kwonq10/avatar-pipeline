@@ -1,0 +1,212 @@
+{
+ "_about": "使用するソフトウェア・学習済みモデルの台帳。status: commercial_ok=商用可（作者が明示）/ ok_with_note=商用可だが注意点あり / unverified=権利未確認（公開物に使わない）/ ng=商用不可 / excluded=取得していない。compose_sns.py --mode public はここで commercial_ok か ok_with_note 以外のものを使っていると書き出しを拒否する。確認日 2026-10-30（Gemini TTS 追加・AivisSpeech 除外）。",
+ "items": {
+  "liveportrait_code": {
+   "name": "LivePortrait（コード）",
+   "version": "KlingAIResearch/LivePortrait@9b294b3d0536135442ea73cb01e6cb3ca7029dd3 + patches/lp_01_mediapipe_face_detector.patch",
+   "license": "MIT",
+   "status": "commercial_ok",
+   "source": "https://github.com/KlingAIResearch/LivePortrait",
+   "note": "LICENSE に『商用利用するなら InsightFace の検出モデルを外して置き換えること』と明記。patch 01 で置き換え済み"
+  },
+  "liveportrait_weights": {
+   "name": "LivePortrait 人物用の重み（base_models 4種・stitching_retargeting・landmark.onnx）",
+   "version": "HF KlingTeam/LivePortrait（SHA256は lp_weights_sha256.txt）",
+   "license": "MIT（HFのライセンスタグ）",
+   "status": "commercial_ok",
+   "source": "https://huggingface.co/KlingTeam/LivePortrait",
+   "note": "liveportrait/ 以下の6ファイルだけを取得"
+  },
+  "mediapipe_face_landmarker": {
+   "name": "MediaPipe Face Landmarker（face_landmarker.task：BlazeFace short range + Face Mesh V2 + Blendshape V2）",
+   "version": "float16/latest（2026-10-30取得、SHA256 64184e22…）",
+   "license": "Apache-2.0（モデルカード）",
+   "status": "commercial_ok",
+   "source": "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task",
+   "note": "モデルカードは顔認識（個人の特定）には使わないこととしている。本用途は顔の位置検出のみ"
+  },
+  "mediapipe_lib": {
+   "name": "mediapipe（Python）",
+   "version": "0.10.14（--no-depsで導入）",
+   "license": "Apache-2.0",
+   "status": "commercial_ok",
+   "source": "https://github.com/google-ai-edge/mediapipe"
+  },
+  "insightface_buffalo_l": {
+   "name": "InsightFace buffalo_l（det_10g / 2d106det）",
+   "license": "非商用研究のみ",
+   "status": "excluded",
+   "source": "https://github.com/deepinsight/insightface",
+   "note": "取得していない。LivePortrait のコードからも読み込まない"
+  },
+  "liveportrait_animals_xpose": {
+   "name": "LivePortrait 動物用・X-Pose",
+   "status": "excluded",
+   "note": "不要のため取得していない"
+  },
+  "musetalk_code": {
+   "name": "MuseTalk（コード）",
+   "version": "TMElyralab/MuseTalk@0a89dec4 ＋ patches/mt_02_mediapipe（新規ファイルのみ、元ファイルは無変更）",
+   "license": "MIT",
+   "status": "commercial_ok",
+   "source": "https://github.com/TMElyralab/MuseTalk",
+   "note": "S3FD・DWPose・face-parse・mmcv系は import ガードで読み込み禁止（avatar_ext/guard.py）"
+  },
+  "musetalk_v15_unet": {
+   "name": "MuseTalk 1.5 UNet（musetalkV15/unet.pth）",
+   "license": "MIT（HF）。README『The trained model are available for any purpose, even commercially』",
+   "status": "commercial_ok",
+   "source": "https://huggingface.co/TMElyralab/MuseTalk",
+   "note": "取得済み（SHA256: mt_weights_sha256.txt）"
+  },
+  "sd_vae_ft_mse": {
+   "name": "sd-vae-ft-mse",
+   "license": "MIT（HF）",
+   "status": "commercial_ok",
+   "source": "https://huggingface.co/stabilityai/sd-vae-ft-mse",
+   "note": "取得済み（SHA256: mt_weights_sha256.txt）。diffusion_pytorch_model.safetensors を使用"
+  },
+  "whisper_tiny": {
+   "name": "whisper-tiny",
+   "license": "Apache-2.0（HF）",
+   "status": "commercial_ok",
+   "source": "https://huggingface.co/openai/whisper-tiny",
+   "note": "取得済み（SHA256: mt_weights_sha256.txt）。model.safetensors を使用"
+  },
+  "dwpose_ll_ucoco_384": {
+   "name": "DWPose dw-ll_ucoco_384.pth",
+   "license": "Apache-2.0（作者のHFタグ）",
+   "status": "excluded",
+   "source": "https://huggingface.co/yzd-v/DWPose",
+   "note": "MediaPipe で代替したため不要。取得していない"
+  },
+  "face_parse_bisent_79999": {
+   "name": "face-parsing BiSeNet 79999_iter.pth（MuseTalk の口元合成マスク）",
+   "license": "コードはMIT。重みは CelebAMask-HQ で学習",
+   "status": "ng",
+   "source": "https://github.com/zllrunning/face-parsing.PyTorch",
+   "note": "CelebAMask-HQ の規約は『非商用研究のみ・派生データ（derived data）を商用に利用しない』。HF の再配布版（ManyOtherFunctions、WTFPL）は第三者のアップロードで、作者による許諾ではない。未取得。MediaPipe で代替。取得せず、import も禁止"
+  },
+  "torchvision_resnet18_imagenet": {
+   "name": "resnet18-5c106cde.pth（BiSeNet の初期値）",
+   "license": "torchvision はBSD-3。ただし torchvision 自身が『重みには学習データ由来の条件があり得る』としている",
+   "status": "unverified",
+   "note": "face-parse と一緒に置き換えれば不要。未取得。MediaPipe で代替。取得せず、import も禁止"
+  },
+  "s3fd": {
+   "name": "S3FD 顔検出 s3fd-619a316812.pth（MuseTalk の前処理）",
+   "license": "重みにライセンス表記なし。MuseTalk が出典とする yxlijun/S3FD.pytorch にもLICENSEなし。WIDER FACE で学習",
+   "status": "unverified",
+   "source": "https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth",
+   "note": "未取得。MediaPipe で代替。取得せず、import も禁止"
+  },
+  "latentsync_syncnet": {
+   "name": "SyncNet（latentsync_syncnet.pt）",
+   "license": "OpenRAIL++",
+   "status": "excluded",
+   "note": "MuseTalk の推論には不要（学習・評価用）"
+  },
+  "aivisspeech_engine": {
+   "name": "AivisSpeech Engine",
+   "version": "未導入（最新安定版 1.2.0）",
+   "license": "LGPL-3.0",
+   "status": "excluded",
+   "source": "https://github.com/Aivis-Project/AivisSpeech-Engine",
+   "note": "2026-10-30 方針変更：AivisSpeech は使わない（未導入）。生成音声の商用利用は可。アプリとしてそのまま使う（改変・再配布しない）"
+  },
+  "aivisspeech_bert": {
+   "name": "deberta-v2-large-japanese-char-wwm（ONNX）",
+   "license": "CC BY-SA 4.0",
+   "status": "excluded",
+   "source": "https://huggingface.co/tsukumijima/deberta-v2-large-japanese-char-wwm-onnx",
+   "note": "2026-10-30 方針変更：AivisSpeech は使わない（未導入）。エンジン内部の推論部品。モデル自体は再配布しない"
+  },
+  "aivisspeech_voice_model": {
+   "name": "音声合成モデル（未選定）",
+   "status": "excluded",
+   "note": "2026-10-30 方針変更：AivisSpeech は使わない（未導入）。AivisHub のページで ACML 1.0 または CC0 であること、学習音声の提供者と許諾が明記されていることを確認してから commercial_ok にする。Anneli は無断学習の問題で削除済みのため使わない"
+  },
+  "noto_sans_jp": {
+   "name": "Noto Sans JP Bold（字幕）",
+   "license": "SIL OFL 1.1",
+   "status": "commercial_ok",
+   "source": "assets/fonts/OFL.txt"
+  },
+  "ffmpeg": {
+   "name": "FFmpeg（Gyan full build 8.1、libx264・libass）",
+   "license": "GPL-3.0（ツールとして使用）",
+   "status": "commercial_ok",
+   "note": "ツールとして実行するだけで、成果物の動画にGPLは及ばない。FFmpeg自体は再配布しない"
+  },
+  "python_libs_liveportrait": {
+   "name": "LivePortrait 環境の Python ライブラリ",
+   "version": "patches/lp_resolved.txt",
+   "license": "torch BSD-3 / onnxruntime-gpu MIT / opencv Apache-2.0 / numpy・scipy・scikit-image BSD / transformers Apache-2.0 / gradio Apache-2.0 / pykalman BSD / albumentations MIT ほか",
+   "status": "commercial_ok",
+   "note": "非商用条項を持つライブラリは見つからなかった（lp_resolved.txt の主要なものを確認）"
+  },
+  "gemini_tts": {
+   "name": "Google Gemini TTS（gemini-3.8-flash-tts、GA）",
+   "version": "Gemini API（Interactions API）、google-genai 2.33.0",
+   "license": "Gemini API 追加利用規約＋Google 生成AI禁止使用ポリシー",
+   "status": "ok_with_note",
+   "source": "https://ai.google.dev/gemini-api/docs/speech-generation",
+   "note": "生成物の所有権を Google は主張しない（同じ・似た出力が他者にも生成され得る）。禁止：人間だけが作ったと偽ること、実在人物へのなりすまし、健康・金融などでの誤解を招く主張。無料枠は入力・出力が Google の改善に使われ人がレビューし得るため、商品・顧客の未公開情報は送らない。18歳以上。EEA・英国・スイス向けに提供するなら有料枠のみ。ローカルモデルは使わない"
+  },
+  "google_genai_sdk": {
+   "name": "google-genai（Python SDK）",
+   "version": "2.33.0",
+   "license": "Apache-2.0",
+   "status": "commercial_ok",
+   "source": "https://github.com/googleapis/python-genai"
+  },
+  "python_libs_musetalk": {
+   "name": "MuseTalk 環境の Python ライブラリ",
+   "version": "patches/mt_resolved.txt（torch 2.3.0+cu118 / diffusers 0.30.2 / transformers 4.39.2 / librosa 0.11.0 / mediapipe 0.10.14）",
+   "license": "BSD / Apache-2.0 / ISC(librosa) / MIT ほか",
+   "status": "commercial_ok",
+   "note": "mmcv・mmpose・mmdet・tensorflow・gradio は入れていない"
+  },
+  "musetalk_sample_audio": {
+   "name": "MuseTalk 同梱のテスト音声（data/audio/eng.wav）",
+   "status": "excluded",
+   "note": "README『testdata は非商用研究のみ』。内部の動作確認だけに使用し、成果物には使わない"
+  },
+  "musetalk_v15_unet_fp16": {
+   "name": "MuseTalk 1.5 UNet fp16 版（自前で変換）",
+   "version": "models/musetalkV15_fp16/unet_fp16.safetensors（SHA256 3cf54e55…、元 unet.pth 7ebf6c98… から変換）",
+   "license": "元の重みと同じ（MIT・商用可）",
+   "status": "commercial_ok",
+   "source": "musetalk/avatar_ext/convert_unet_fp16.py",
+   "note": "元ファイルは変更していない。fp32→fp16 の丸め：最大誤差 4.9e-4、0 になった値 1,599 個（全体の 0.00019%）、Inf/NaN なし"
+  },
+  "ltxv_2b_096_distilled": {
+   "name": "LTX-Video 2B 0.9.6 distilled（ltxv-2b-0.9.6-distilled-04-25.safetensors、transformer＋VAE、bf16）",
+   "version": "HF Lightricks/LTX-Video（SHA256 は ltx_weights_sha256.txt）",
+   "license": "LTXV Open Weights License 0.X（2025-04-15）",
+   "status": "ok_with_note",
+   "source": "https://huggingface.co/Lightricks/LTX-Video",
+   "note": "年間売上1,000万ドル以上の事業者は別途有料の商用ライセンスが必要（未満は無償で商用可）。添付A(e)：生成物は『機械生成であることを明示』せずに公開してはならない → SNSでAI表示が必須。(g) 本人の同意なくなりすまし（ディープフェイク）禁止。第6条：最新版の利用努力義務（旧版の利用は自己責任）→ 0.9.8 への移行を検討。出力の権利は主張しない（第5条）"
+  },
+  "ltx_video_code": {
+   "name": "LTX-Video コード",
+   "version": "Lightricks/LTX-Video@4b2d053（2026-01-05）",
+   "license": "Apache-2.0（リポジトリ）／モデルの Complementary Material として Open Weights License の対象にもなる",
+   "status": "ok_with_note",
+   "source": "https://github.com/Lightricks/LTX-Video"
+  },
+  "t5_xxl_pixart_text_encoder": {
+   "name": "T5 v1.1 XXL エンコーダー（PixArt-alpha/PixArt-XL-2-1024-MS の text_encoder、fp32 2分割）",
+   "version": "SHA256 は ltx_weights_sha256.txt",
+   "license": "元は Google T5 v1.1（Apache-2.0）。配布リポジトリの表記は openrail++",
+   "status": "ok_with_note",
+   "source": "https://huggingface.co/PixArt-alpha/PixArt-XL-2-1024-MS",
+   "note": "LTX 公式設定が指定するテキストエンコーダー。openrail++ の利用制限（違法・なりすまし等の禁止）に従う。bf16 にして GPU に読み込む（ファイルは変更しない）"
+  },
+  "ltx_prompt_enhancer": {
+   "name": "プロンプト強化（Florence-2-large-PromptGen / Llama-3.2-3B-Instruct）",
+   "status": "excluded",
+   "note": "公式設定では120語未満で自動的に有効になるが、使わない（取得していない）。Llama は Llama ライセンスのため別途確認が必要"
+  }
+ }
+}

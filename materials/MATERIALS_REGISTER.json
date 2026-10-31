@@ -1,0 +1,92 @@
+{
+ "_about": "動画に使う素材（人物画像・見本動画・音声原稿・背景・BGM）の台帳。allowed_use が public_commercial の素材だけが SNS 公開用（compose_sns.py --mode public）に使える。公開用にするには、権利者・許諾の証拠（ファイルやURL）・肖像の同意・AI加工の可否をすべて埋めること。",
+ "_fields": {
+  "path": "素材ファイル（D:\\Avatar-Pipeline からの相対パス）",
+  "sha256": "ファイルのSHA256（compose_sns.py が照合する）",
+  "kind": "source_image / driving_video / script / background / music / other",
+  "origin": "self_shot（自分で撮影）/ licensed_person（許可を得た人物）/ ai_generated（AI生成人物）/ stock（商用可の素材）/ official_sample（公式サンプル）",
+  "rights_holder": "権利者",
+  "permission_evidence": "許諾書・利用規約・ライセンスのファイルやURL",
+  "portrait_consent": "肖像の本人同意（yes / no / na）。AI生成人物は na だが、実在人物に似せていないことを確認する",
+  "ai_processing_ok": "AIでの加工・動画化・SNS公開が許諾に含まれるか（yes / no）",
+  "commercial_ok": "商品紹介・PR・収益化に使えるか（yes / no）",
+  "allowed_use": "internal_only / public_commercial"
+ },
+ "items": {
+  "lp_sample_s9": {
+   "path": "liveportrait/assets/examples/source/s9.jpg",
+   "kind": "source_image",
+   "origin": "official_sample",
+   "rights_holder": "不明（LivePortrait リポジトリ同梱）",
+   "permission_evidence": "",
+   "portrait_consent": "na",
+   "ai_processing_ok": "no",
+   "commercial_ok": "no",
+   "allowed_use": "internal_only",
+   "note": "モナ・リザ。絵画はパブリックドメインだが、この画像ファイルの出典は未確認。動作確認専用"
+  },
+  "lp_sample_d0": {
+   "path": "liveportrait/assets/examples/driving/d0.mp4",
+   "kind": "driving_video",
+   "origin": "official_sample",
+   "rights_holder": "不明（LivePortrait リポジトリ同梱、実在人物）",
+   "permission_evidence": "",
+   "portrait_consent": "no",
+   "ai_processing_ok": "no",
+   "commercial_ok": "no",
+   "allowed_use": "internal_only",
+   "note": "動作確認専用。公開物に使わない"
+  },
+  "lp_sample_d11": {
+   "path": "liveportrait/assets/examples/driving/d11.mp4",
+   "kind": "driving_video",
+   "origin": "official_sample",
+   "rights_holder": "不明（LivePortrait リポジトリ同梱、実在人物の子ども）",
+   "permission_evidence": "",
+   "portrait_consent": "no",
+   "ai_processing_ok": "no",
+   "commercial_ok": "no",
+   "allowed_use": "internal_only",
+   "note": "先頭5秒を内部テストの見本動画に使用。公開物に使わない"
+  },
+  "musetalk_sample_eng": {
+   "path": "musetalk/data/audio/eng.wav",
+   "kind": "other",
+   "origin": "official_sample",
+   "rights_holder": "不明（MuseTalk testdata）",
+   "permission_evidence": "",
+   "portrait_consent": "na",
+   "ai_processing_ok": "no",
+   "commercial_ok": "no",
+   "allowed_use": "internal_only",
+   "note": "MuseTalk README: testdata は非商用研究のみ"
+  },
+  "avatar_bob_v1": {
+   "path": "inputs/avatar_bob.png",
+   "kind": "source_image",
+   "origin": "ai_generated",
+   "rights_holder": "ユーザー（OpenAI ChatGPT で生成）",
+   "permission_evidence": "OpenAI 利用規約（https://openai.com/policies/terms-of-use）：生成物の権利は利用者に帰属し、商用利用も可（ユーザー申告。規約の該当箇所は公開前に再確認）",
+   "portrait_consent": "na",
+   "ai_processing_ok": "yes",
+   "commercial_ok": "yes",
+   "allowed_use": "internal_only",
+   "note": "架空の成人女性、ショートボブ、実写風（ユーザー申告 2026-10-30）。941x1672 PNG。実在の人物に似せていないこと・OpenAI 利用ポリシーへの適合を公開前に確認する。公開用への切り替えは未実施（internal_only のまま）",
+   "sha256": "7df6b8b54ec6bdb18de169216e879502db264a26321886993790f481f04be3e0"
+  },
+  "avatar_bob_v1_384x640": {
+   "path": "runs/20261030-1330_ltx_bob/inputs/avatar_bob_384x640.png",
+   "sha256": "a265da9a5890482f319e7c716d389c003eb8e38bee4c5f0070e66ad2428a5a28",
+   "kind": "source_image",
+   "origin": "ai_generated",
+   "derived_from": "avatar_bob_v1",
+   "note": "幅384にLanczos縮小（384x682）→ 下端42pxを切って384x640。元画像は無変更",
+   "allowed_use": "internal_only",
+   "ai_processing_ok": "yes",
+   "commercial_ok": "yes",
+   "portrait_consent": "na",
+   "rights_holder": "ユーザー（OpenAI ChatGPT で生成）",
+   "permission_evidence": "avatar_bob_v1 と同じ"
+  }
+ }
+}

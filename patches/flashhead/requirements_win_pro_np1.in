@@ -1,0 +1,25 @@
+# SoulX-FlashHead Pro を Windows 11 で動かすための依存関係（案）。公式 requirements.txt から次を外した：
+# 案B：mediapipe 0.10.9（numpy 1.x 向けのビルド）に合わせて numpy<2・opencv 4.11（contrib も同じ版）・diffusers 0.36.0（モデルを保存した版）に固定
+#   nvidia-nccl-cu12（Linux 専用・複数GPU用） / xformers（Lite の LTX 経路だけで使う） / decord（コードで未使用）
+#   gradio・flask（推論スクリプトに不要） / xfuser（1GPU では呼ばれない。import を保護する修正で回避）
+torch==2.7.1
+torchvision==0.22.1
+diffusers==0.36.0
+transformers==4.57.3
+tokenizers>=0.20.3
+accelerate>=1.8.1
+opencv-python==4.11.0.86
+opencv-contrib-python==4.11.0.86
+imageio
+imageio-ffmpeg
+easydict
+ftfy
+scikit-image
+loguru
+pyloudnorm
+librosa
+mediapipe==0.10.9
+einops
+safetensors
+pyyaml
+numpy<2

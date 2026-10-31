@@ -1,0 +1,8 @@
+# 改行コードの扱い（Windows と別の環境で同じ内容にする）
+* text=auto
+*.cmd text eol=crlf
+*.sh  text eol=lf
+*.py  text eol=lf
+*.md  text eol=lf
+# パッチは中身を変えずにそのまま保存する（改行を変換すると git apply が通らなくなる）
+*.patch -text

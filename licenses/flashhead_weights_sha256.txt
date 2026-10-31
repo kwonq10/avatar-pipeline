@@ -1,0 +1,14 @@
+94b480d3af70e73989371ed0c106656c2c887201286b1210e835cd09e71e32b1 *./SoulX-FlashHead-1_3B/Model_Pro/config.json
+e47e61b9023ea1aac60c0c0fff077289bc6cca443c71907e5a76a411480af250 *./SoulX-FlashHead-1_3B/Model_Pro/diffusion_pytorch_model.safetensors
+46eb2fde0cdaf249e8b6aeacfd84f12e5b2c4a32af0cd61054fbaea380619979 *./SoulX-FlashHead-1_3B/README.md
+38071ab59bd94681c686fa51d75a1968f64e470262043be31f7a094e442fd981 *./SoulX-FlashHead-1_3B/VAE_Wan/Wan2.1_VAE.pth
+8dfdbf11629cb780c51481fe45d1cd0ced69a752d09f5ac9aa895e92ff2f9a21 *./SoulX-FlashHead-1_3B/config.json
+3a6905cabd634f94a3e7eea7fc85828c51db026d271f4fd490a91fdcf03c5689 *./SoulX-FlashHead-1_3B/model_index.json
+fc52a0adfa64e446800f9944c6cf9b90da3127aba548860ea5714516ec8c18c7 *./wav2vec2-base-960h/README.md
+d3ec255c063d9f95057b553b19c20135b259875834a4fe9deb218a6be25b4cf3 *./wav2vec2-base-960h/config.json
+d3de0c797bf9b65f90bc65c30cb7b303ebeda341f6fc80af33628c4b26b95632 *./wav2vec2-base-960h/feature_extractor_config.json
+8aa76ab2243c81747a1f832954586bc566090c83a0ac167df6f31f0fa917d74a *./wav2vec2-base-960h/model.safetensors
+b225d617c025463b9e157e06afea8b90dc7078fc70b013c533328423e0486b4a *./wav2vec2-base-960h/preprocessor_config.json
+bb7068de1150661a10b55f9e4b12a0e77af8bf91f5e45e1b58afaf1d0e17f675 *./wav2vec2-base-960h/special_tokens_map.json
+dc790594f5bc351a4311c6624f40acd95850d4aaf2a5cb3c656c9b610720b608 *./wav2vec2-base-960h/tokenizer_config.json
+19727f8944fe6459fc3f240ae2c198395b740f6a029bd23e06656266b83bcf64 *./wav2vec2-base-960h/vocab.json

@@ -1,0 +1,105 @@
+# Avatar-Pipeline の .gitignore（allowlist 方式）
+# 既定では「すべて除外」し、GitHub で共有するものだけを ! で許可する。
+# うっかり `git add .` をしても、モデル・動画・仮想環境・機密情報・バックアップは入らない。
+# 新しいファイルを共有したいときは、ここに ! の行を足す（足す前に docs/DEVELOPMENT.md の確認項目を見る）。
+# 以前の内容は .gitignore.bak_20261031_pre_github（ローカルだけ）
+
+# ---- 1. 既定ですべて除外 ----
+/*
+
+# ---- 2. ルートの文書・設定 ----
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/PROJECT_STATUS.md
+!/RESTART_PROMPT.md
+!/CODEX_HANDOFF.md
+!/env.sh
+!/docs/
+
+# ---- 3. GUI（独自コード） ----
+!/gui/
+/gui/*
+!/gui/app.py
+!/gui/job_manager.py
+!/gui/start_gui.cmd
+!/gui/start_gui_gpu.cmd
+!/gui/requirements.in
+!/gui/requirements.lock.txt
+!/gui/static/
+/gui/static/*
+!/gui/static/app.css
+!/gui/tools/
+/gui/tools/*
+!/gui/tools/*.py
+
+# ---- 4. FlashHead のワーカー・ツール（独自コード。公式リポジトリと重みは含めない） ----
+!/flashhead/
+/flashhead/*
+!/flashhead/env_check.py
+!/flashhead/tools/
+/flashhead/tools/*
+!/flashhead/tools/*.py
+!/flashhead/tools/fh_limits.json
+
+# ---- 5. 監視ツール（独自コード） ----
+!/tools/
+/tools/*
+!/tools/run_stage.py
+
+# ---- 6. Windows 対応のパッチと依存関係のロック ----
+!/patches/
+/patches/*
+!/patches/flashhead/
+/patches/flashhead/*
+!/patches/flashhead/fh_01-03_windows_lowmem.patch
+!/patches/flashhead/*.txt
+!/patches/flashhead/*.in
+
+# ---- 7. 重みの SHA256・ライセンス台帳・素材台帳（中身は文字だけ） ----
+!/licenses/
+/licenses/*
+!/licenses/flashhead_weights_sha256.txt
+!/licenses/MODEL_LICENSES.json
+!/materials/
+/materials/*
+!/materials/MATERIALS_REGISTER.json
+
+# ---- 8. CPU テスト（テスト用に作る音声は除外） ----
+!/tests_cpu/
+/tests_cpu/*
+!/tests_cpu/*.py
+!/tests_cpu/README.md
+
+# ---- 9. 上で許可した場所の中でも、必ず除外するもの ----
+secrets/
+*.env
+.env*
+.venv/
+__pycache__/
+*.py[cod]
+*.bak_*
+*.log
+*.tmp
+*.incomplete.*
+*.partial.*
+# 大容量の重み・生成物・素材
+*.safetensors
+*.pth
+*.pt
+*.ckpt
+*.bin
+*.onnx
+*.h5
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.zip
+*.exe
