@@ -2456,3 +2456,15 @@ GUI（gui\.venv、torch なし）── job_manager.start_job("fh_dryrun" | "fh_
 - 注：SETUP.md の新しい PC での一括の再現と、`huggingface-cli download --include` の組み合わせは未実行（元の PC での手順の記録から作成）
 ### アップロードに必要な操作（ユーザーの確認のあと）
 1. git の名前とメール（GitHub の noreply を推奨）を設定 → 2. `gh auth login` → 3. `git add -A`（allowlist で 49 ファイルだけ）→ `git status` で確認 → 4. 最初のコミット → 5. `gh repo create avatar-pipeline --private --source . --remote origin --push`
+
+## 65. 2026-10-31：GitHub の非公開リポジトリに初回登録（ユーザー承認。GPU・生成なし）【実測】
+- リポジトリ：**https://github.com/kwonq10/avatar-pipeline**（**PRIVATE**・既定のブランチ main）。作成前に同名のリポジトリが無いことを確認。強制 push はしていない
+- 認証：`gh auth status` で kwonq10 にログイン済み（トークンは表示・保存していない）
+- git の設定（このリポジトリのローカルだけ）：user.name=kwonq10・user.email=GitHub の noreply アドレス（API で得たアカウントの ID と GitHub の決まった形式から作成）
+- 登録前の変更：PROJECT_STATUS.md の Windows のユーザー名を含むパス1か所を `%USERPROFILE%` の表現に置き換えた
+- 最終検査（ステージした内容そのものを検査）：49 ファイル・567.6KB。secrets・venv・重み・動画・音声・画像・キャッシュ・ログ・バックアップ・公式リポジトリは 0 件。機密情報の検査は、64節の検査項目の説明文の「password=」1件だけで、実際の値は無し。`git diff --cached --check` の指摘は Windows 用パッチの中の行末の空白だけ（元のソースの空白。消すとパッチが当たらないので変更しない）。登録したパッチは作業中のファイルとバイト単位で同じで、SoulX-FlashHead に対して適用済みと判定される
+- 初回コミット：**b56a53ce75b51321b12d7e68ba9bf47b17fe835b**「Initial commit: Avatar-Pipeline Windows GUI and FlashHead Pro integration」（49 ファイル）
+- push：`gh repo create avatar-pipeline --private --source=. --remote=origin --push` → main を新規作成・origin/main を追跡
+- 確認：visibility=PRIVATE・ローカルの HEAD とリモートの main が同じ（b56a53c）・origin = https://github.com/kwonq10/avatar-pipeline.git・リモートのファイル 49（567.6KB）がローカルのコミットと同じ・除外すべき種類のファイルは 0・CODEX_HANDOFF.md・README.md（docs/SETUP.md へのリンクあり）・docs・gui・flashhead/tools・パッチがある
+- 改行：.gitattributes により、リポジトリ内は .py・.md・.sh が LF、.cmd が CRLF。ローカルの作業ファイルは次に git が書き換えるまで元の改行のまま（動作には影響しない）
+- **この節（65節）と RESTART_PROMPT・CODEX_HANDOFF への追記は、ローカルの変更として残している（まだコミット・push していない。次のコミットはユーザーの承認のあと）**
