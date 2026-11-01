@@ -12,7 +12,7 @@
   --ink: #1f2328;
   --ink-sub: #4b535c;
   --line-soft: #d0d7de;
-  --media-h: clamp(150px, calc(100vh - 690px), 400px);   /* 動画の欄の高さ：画面の高さに合わせる */
+  --media-h: clamp(180px, calc(100vh - 650px), 400px);   /* 動画の欄の高さ：画面の高さに合わせる */
   --img-h: calc(var(--media-h) + 10px);                    /* 左の画像の欄（右に名前・画像チェックを並べる） */
 }
 
@@ -26,6 +26,14 @@
 body, .gradio-container, gradio-app { background: #ffffff !important; }
 .gradio-container { color: var(--ink) !important; max-width: 100% !important; padding: 8px 14px 6px !important; }
 #app-root, .gradio-container .contain { gap: 8px !important; }
+/* Gradio の入れ子の最小幅を解放する。パネル内だけで内容を折り返し、ページ全体を横に広げない */
+#app-root, #main-row, #out-top, #img-row, #img-side, #col-video, #col-settings,
+.rb-panel, .rb-panel > .rb-inner, #bottom-row > div {
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+.rb-inner .block { min-width: 0 !important; max-width: 100% !important; }
+#img-check, #aud-info, #gpu-confirm-text, .hint, .st-warn { overflow-wrap: anywhere; }
 footer { display: none !important; }
 
 /* タイトル：1行に詰める */
@@ -35,7 +43,7 @@ footer { display: none !important; }
 .title-line h1 { font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--ink); }
 .title-line h1 span { font-size: 0.85rem; font-weight: 500; color: var(--ink-sub); margin-left: 6px; }
 .title-line p { margin: 0; font-size: 0.84rem; color: var(--ink-sub); flex: 1 1 380px; }
-.gpu-badge { font-size: 0.8rem; font-weight: 600; color: #6e4b00; background: #fff4d6; border: 1px solid #e8c56a; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.gpu-badge { font-size: 0.8rem; font-weight: 600; color: #6e4b00; background: #fff4d6; border: 1px solid #e8c56a; border-radius: 999px; padding: 2px 10px; white-space: normal; max-width: 100%; line-height: 1.35; }
 
 /* ---------- 虹色の枠のパネル ---------- */
 /* 外側は虹色（パディング＝線の太さ）、内側は白。conic-gradient の角度を回すので、色が枠線に沿って流れる */
@@ -89,7 +97,7 @@ footer { display: none !important; }
 
 /* ボタン：大きく、役割で区別する */
 #btn-row { gap: 8px !important; }
-#btn-row button { white-space: nowrap !important; }
+#btn-row button { white-space: normal !important; overflow-wrap: anywhere; line-height: 1.35; }
 #btn-generate, #btn-row button { min-height: 48px !important; font-size: 0.98rem !important; padding: 4px 8px !important; font-weight: 700 !important; border-radius: 10px !important; }
 #btn-generate { background: #1f6feb !important; color: #ffffff !important; border: 2px solid #1f6feb !important; }
 #btn-generate:disabled { background: #e7ecf3 !important; border: 2px dashed #9aa7b8 !important; color: #4b535c !important; cursor: not-allowed; opacity: 1 !important; }
@@ -104,21 +112,21 @@ footer { display: none !important; }
 /* 1秒ごとの更新中に Gradio が薄く表示する（pending）のを止め、常に読める濃さにする */
 #status-panel, #status-panel.pending, #status-panel .pending, #status-box, #out-path { opacity: 1 !important; }
 .st-panel { border: 1px solid var(--line-soft); border-radius: 12px; padding: 10px 14px 8px; background: #fbfcfd; }
-.st-head { display: flex; align-items: center; gap: 12px; }
+.st-head { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; }
 .st-title { font-size: 1rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
 .st-badge { font-size: 0.95rem; font-weight: 700; padding: 3px 12px; border-radius: 999px; background: #eaeef2; color: var(--ink); white-space: nowrap; }
 .st-running .st-badge, .st-queued .st-badge { background: #ddeaff; color: #0b3d91; }
 .st-done .st-badge { background: #dcf5e3; color: #0f5c2a; }
 .st-failed .st-badge, .st-aborted .st-badge { background: #fde2e0; color: #8a1c12; }
 .st-stopped .st-badge { background: #fff1d6; color: #6e4b00; }
-.st-msg { flex: 1; font-size: 0.95rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-msg { min-width: 0; font-size: 0.95rem; color: var(--ink); overflow-wrap: anywhere; white-space: normal; }
 .st-pct { font-size: 2.2rem; font-weight: 800; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
 .st-pct small { font-size: 1.1rem; font-weight: 700; margin-left: 1px; }
 .st-sub { font-size: 0.78rem; color: var(--ink-sub); margin-top: 3px; }
 .st-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 14px; margin-top: 6px; }
-.st-grid .cell { display: flex; flex-direction: column; border-left: 3px solid var(--line-soft); padding-left: 8px; }
+.st-grid .cell { min-width: 0; display: flex; flex-direction: column; border-left: 3px solid var(--line-soft); padding-left: 8px; }
 .st-grid .cell span { font-size: 0.76rem; color: var(--ink-sub); }
-.st-grid .cell b { font-size: 1.08rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.st-grid .cell b { font-size: 1.08rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: normal; overflow-wrap: anywhere; }
 .st-src { font-size: 0.72rem; color: var(--ink-sub); margin-top: 4px; text-align: right; }
 .st-warn { margin: 4px 0 0 1.1em; padding: 0; font-size: 0.8rem; color: #8a1c12; }
 
@@ -133,12 +141,14 @@ footer { display: none !important; }
 }
 
 /* 保存先・詳細ログ・履歴 */
-#out-path-row { gap: 10px !important; align-items: center !important; flex-wrap: nowrap !important; }
+#out-path-row { gap: 6px 10px !important; align-items: center !important; flex-wrap: wrap !important; }
+#out-path { flex: 1 1 18rem !important; min-width: 0 !important; max-width: 100% !important; }
 #out-path-label { flex: 0 0 auto !important; min-width: 0 !important; width: auto !important; padding: 0 !important; }
 .out-path-label { font-size: 0.9rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
 #out-path textarea, #out-path input { font-size: 0.86rem !important; color: var(--ink) !important; border: 1px solid var(--line-soft) !important; border-radius: 8px !important; background: #f6f8fa !important; }
 #status-box textarea { font-size: 0.82rem !important; line-height: 1.38 !important; color: var(--ink) !important; font-family: ui-monospace, Consolas, monospace !important; }
 #bottom-row { gap: 12px !important; }
+#history-table { min-width: 0 !important; max-width: 100% !important; overflow-x: auto; }
 #log-acc, #history-acc { border: 2px solid var(--line-soft) !important; border-radius: 12px !important; }
 
 /* ---------- 詰める（1画面に収めるため） ---------- */
@@ -156,28 +166,65 @@ main.app, .gradio-container main.fillable { padding-top: 0 !important; padding-b
 #acc-preview, #acc-settings { padding: 4px 10px !important; }
 
 /* ---------- 画面の高さ・幅に合わせる ---------- */
-/* 1366×768 など低い画面：説明を短くし、余白を詰める */
-@media (max-height: 820px) {
+/* PC は元の左右配置を維持する。入れ子のカラムの最小幅で折り返さないようにする */
+@media (min-width: 1101px) {
+  #main-row, #out-top { flex-wrap: nowrap !important; }
+  #panel-input { flex: 4 1 0% !important; }
+  #panel-output { flex: 7 1 0% !important; }
+  #col-video { flex: 5 1 0% !important; }
+  #col-settings { flex: 4 1 0% !important; }
+}
+/* 1366×768 など低いPC画面：余白を詰める。安全確認や警告は隠さない */
+@media (min-width: 1101px) and (max-height: 820px) {
+  :root { --media-h: 160px; }
   .title-line p { display: none; }
   .rb-panel > .rb-inner { padding: 8px 12px !important; gap: 5px !important; }
   #btn-generate, #btn-row button { min-height: 40px !important; }
   .st-pct { font-size: 1.8rem; }
   .st-panel { padding: 8px 12px 6px; }
-  #panel-input .hint, #btn-hint, .st-sub, .st-src { display: none !important; }
+  .st-sub, .st-src { font-size: 0.72rem; }
   .title-line h1 { font-size: 1.1rem; }
   .sec-head h3 { font-size: 0.95rem !important; }
   .st-grid { gap: 2px 12px; margin-top: 4px; }
   .st-grid .cell b { font-size: 0.98rem; }
   .rb-progress { margin: 5px 0 0; }
-  #face-crop .info, #face-crop [data-testid="block-info"] + span, #face-crop .info-text { display: none !important; }
   #img-check p, #aud-info p, #img-check li { font-size: 0.78rem !important; line-height: 1.3; }
 }
 /* 狭い画面（1100px 未満）：1カラム。1画面に無理に収めない */
 @media (max-width: 1100px) {
   #main-row, #out-top { flex-direction: column !important; }
-  #main-row > div, #out-top > div { width: 100% !important; min-width: 0 !important; }
-  :root { --media-h: 42vh; }
+  #main-row > div, #out-top > div { width: 100% !important; min-width: 0 !important; flex: 1 1 auto !important; }
+  :root { --media-h: clamp(180px, 42vh, 400px); }
   .st-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* 390px 前後：縦に読める配置にする。安全確認・警告・停止は省略しない */
+@media (max-width: 600px) {
+  :root { --media-h: clamp(180px, 32vh, 280px); }
+  .gradio-container { padding: 8px !important; }
+  .rb-panel > .rb-inner { padding: 8px 10px !important; }
+  .title-line { gap: 6px; }
+  .title-line h1 { font-size: 1.05rem; }
+  .title-line h1 span { display: block; margin: 3px 0 0; }
+  .title-line p { flex-basis: 100%; }
+  #img-row, #bottom-row { flex-direction: column !important; }
+  #char-image, #img-side, #bottom-row > div {
+    width: 100% !important; min-width: 0 !important; max-width: 100% !important; flex: 1 1 auto !important;
+  }
+  #out-video video, #char-audio audio { width: 100% !important; max-width: 100% !important; }
+  #btn-row { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #btn-generate { grid-column: 1 / -1; }
+  #btn-row button, #gpu-confirm-btns button { min-height: 44px !important; }
+  #gpu-confirm-btns { flex-direction: column !important; }
+  #gpu-confirm-btns button { width: 100% !important; }
+  .st-head { grid-template-columns: minmax(0, 1fr) auto; }
+  .st-title { grid-column: 1; grid-row: 1; }
+  .st-badge { grid-column: 1; grid-row: 2; justify-self: start; white-space: normal; }
+  .st-pct { grid-column: 2; grid-row: 1 / span 2; font-size: 1.8rem; }
+  .st-msg { grid-column: 1 / -1; grid-row: 3; }
+  .st-sub { overflow-wrap: anywhere; }
+  .st-src { text-align: left; }
+  #out-path-row { flex-direction: column !important; align-items: stretch !important; }
+  #out-path { flex: 1 1 auto !important; width: 100% !important; }
 }
 
 /* 動きを減らす設定（Windows の「アニメーション効果」オフなど）：虹色は止めて表示だけ残す */
@@ -194,8 +241,9 @@ main.app, .gradio-container main.fillable { padding-top: 0 !important; padding-b
 #gpu-confirm { border: 2px solid #1f6feb !important; border-radius: 12px !important; background: #f5f9ff !important; padding: 8px 10px !important; }
 #gpu-confirm-text, #gpu-confirm-text p, #gpu-confirm-text li, #gpu-confirm-text td, #gpu-confirm-text th { font-size: 0.8rem !important; line-height: 1.35 !important; }
 #gpu-confirm-text h4 { margin: 0 0 4px 0 !important; font-size: 0.95rem !important; }
-#gpu-confirm-text table { margin: 4px 0 !important; }
-#gpu-confirm-text td, #gpu-confirm-text th { padding: 1px 6px !important; }
+#gpu-confirm-text table { margin: 4px 0 !important; width: 100% !important; table-layout: fixed; }
+#gpu-confirm-text td, #gpu-confirm-text th { padding: 1px 6px !important; white-space: normal !important; overflow-wrap: anywhere; }
+#gpu-confirm-btns button { min-width: 0 !important; white-space: normal !important; overflow-wrap: anywhere; line-height: 1.35; }
 #btn-confirm-gpu { background: #1f6feb !important; color: #fff !important; border: 2px solid #1f6feb !important; font-weight: 700 !important; min-height: 42px !important; }
 #btn-cancel-gpu { background: #fff !important; color: var(--ink) !important; border: 2px solid #8c959f !important; min-height: 42px !important; }
 
@@ -214,4 +262,4 @@ main.app, .gradio-container main.fillable { padding-top: 0 !important; padding-b
 #av-mute-btn:focus-visible { outline: 3px solid #1e6bff; outline-offset: 2px; }
 .av-mute-note { font-size: 0.78rem; color: var(--ink-sub); }
 @media (max-width: 600px) { #av-mute-btn { width: 100%; min-height: 44px; } }
-@media (max-height: 820px) { .av-mute-note { display: none; } #av-mute-btn { min-height: 36px; } }
+@media (min-width: 1101px) and (max-height: 820px) { .av-mute-note { display: none; } #av-mute-btn { min-height: 36px; } }
