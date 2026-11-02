@@ -16,7 +16,7 @@
 - **温度の余裕が小さい**：T2 は約 25 チャンク目から 80〜82℃ で横ばい。停止の基準（83℃・10秒）まで約 0.9℃。T3 の前に冷却（室温・ケースの風通し・ファン）を確認する。基準は変えない
 - ミュートボタンの件は解決済み（7861 の古い GUI を停止し、ユーザーが起動し直して表示を確認。57・58節）。13章-1 は過去の記録
 - 2026-10-31 の時点では Claude Code で開発を継続中。この文書は Claude Code の利用制限のあとに使う
-- **GitHub の準備**（64節）：`README.md`・`docs/SETUP.md`・`docs/DEVELOPMENT.md`（ブランチ運用・記録のルール）・`docs/THIRD_PARTY.md` を作成。`.gitignore` は allowlist 方式（共有は 49 ファイル）。`git init` 済み・未 commit・未 push。push 後は GitHub のリポジトリ（非公開 avatar-pipeline）から作業する。0章-6・17章の「git の管理下ではない」は、それ以前の記述
+- **GitHub の準備**（64節）：`README.md`・`docs/SETUP.md`・`docs/DEVELOPMENT.md`（ブランチ運用・記録のルール）・`docs/THIRD_PARTY.md` を作成。`.gitignore` は allowlist 方式（共有は 49 ファイル）。**GitHub の非公開リポジトリ https://github.com/kwonq10/avatar-pipeline に初回登録済み**（65節・main・b56a53c）。Codex はこのリポジトリを使い、作業ブランチ `codex/<内容>` → Pull Request で main に統合する（重み・venv・公式リポジトリは docs/SETUP.md の手順でローカルに用意）。0章-6・17章の「git の管理下ではない」は、それ以前の記述
 
 ## 0. いちばん大事な注意（作業を始める前に）
 1. **GPU 生成（実推論）は、毎回ユーザーの明示的な承認が必要。** 承認は1回ごとで、使い切ったら終わり。これまでの承認はすべて使い切っている
