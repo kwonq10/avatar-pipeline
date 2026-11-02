@@ -2468,3 +2468,59 @@ GUI（gui\.venv、torch なし）── job_manager.start_job("fh_dryrun" | "fh_
 - 確認：visibility=PRIVATE・ローカルの HEAD とリモートの main が同じ（b56a53c）・origin = https://github.com/kwonq10/avatar-pipeline.git・リモートのファイル 49（567.6KB）がローカルのコミットと同じ・除外すべき種類のファイルは 0・CODEX_HANDOFF.md・README.md（docs/SETUP.md へのリンクあり）・docs・gui・flashhead/tools・パッチがある
 - 改行：.gitattributes により、リポジトリ内は .py・.md・.sh が LF、.cmd が CRLF。ローカルの作業ファイルは次に git が書き換えるまで元の改行のまま（動作には影響しない）
 - **この節（65節）と RESTART_PROMPT・CODEX_HANDOFF への追記は、ローカルの変更として残している（まだコミット・push していない。次のコミットはユーザーの承認のあと）**
+
+## 66. 2026-11-01 12:09 JST：T2の頭部運動をCPU解析（GPU生成なし）【実測＋推定】
+- ユーザー承認：CPU解析、解析コードの実装、指定出力への保存、開発記録。GPU・モデル・環境・安全基準・検証済み上限・GUI・ブラウザは変更していない。
+- cleanなclaude/docs-github-registration-record（2462df8）からcodex/t2-motion-analysisを作成。元ブランチとmainは保護。ls-remoteで元ブランチ2462df8/main b56a53cの一致を確認。pullによる統合は不要。push・PR作成・マージなし。
+- 65節の「未コミット」は古い記録で、2462df8にコミット済み。前回引き継ぎ調査でGitHubはPublicを確認済み。65節は登録当時のPrivateの記録として残す。
+- 新規：flashhead/tools/t2_motion_analysis.py（OpenCV・MediaPipe FaceMesh CPU・numpy・matplotlib・Pillow）、tests_cpu/test_t2_motion_analysis.py。生成エンジンは変更なし。
+- 出力：outputs/t2/motion_analysis/REPORT.md、motion_full.png、motion_12s.png、frames_12_13.png、other_motion.png、per_frame.csv、candidates.csv、events.csv、boundaries.csv、summary.json、static_validation.csv、validation.json。初期解析の不採用資料はrejected_initial/に保管。
+- 全1,500枚の顔を検出。フレーム0始まり。f308=12.32秒=第12チャンク先頭。最大中心移動は307→308の10.23px（左2.26・上9.98）。f311=12.44秒は内部で、全画面グレーMAD最大13.079。動きは境界前から始まる。
+- 強い動きの候補は12.20–12.44秒（0.24秒）と12.56–12.80秒（0.24秒）。閉眼と頭の向き直しを含む全体は約0.8秒。候補区間はP95閾値によるもので不自然さの確定判定ではない。
+- 307→308のyaw変化推定+6.76度・pitch変化推定-0.49度・2D目尻線+4.82度。一般顔モデル＋未校正カメラの推定値。絶対角度は実姿勢とみなさない。顔幅変化は+0.30%。EARは306で0.190、311で0.326。目・口を除いた領域も大きく変化し、まばたきだけでは説明できない。
+- 53境界の中心移動平均/P95=1.382/2.755px、内部1446件=1.294/3.859px。内部f1131（45.24秒）も10.14px、f1242（49.68秒）6.87px、f994（39.76秒）6.71px。境界だけに限定されない。
+- 原因分類：C生成特性が最有力【推定】、B seed/参照画像等が影響候補【未検証】、A不具合は確認できず、D修正不要はユーザーの違和感があるため断定しない。pipeは維持され、前の5枚を再エンコードして継承するが、速度・加速度を制約する処理はない。生成内部の因果はGPU対照試験なしには確定できない。
+- CPU検証：3軸の既知10度投影テスト合格、1500枚全数値有限・53境界、独立静止画38枚の中心差最大2.31px、既存口開閉CSVの最大差0.00004982（丸め内）。角度初期解のNaNを検出して修正し、奥行き座標規約も確認後再解析。初期版の数値は採用しない。
+- 原本SHA256は実行前後一致：f9550472aca02e390996fddf0faa3547181e765a348f3ead2f4e5152884ab2fb。
+- 次の提案：原本を保持した任意のCPU位置・傾き安定化を独立ツールで小区間試作。背景の揺れ・余白・ぼけを比較し、既定では採用しない。yaw/pitchの根本制御にはならない。次点は新規承認後のseed比較。A1先読み・継承枚数変更は本件の原因未確定なので保留。今回の実装は解析までで停止。
+
+## 67. 2026-11-01 12:16 JST：T2のCPU安定化試作・A/B/C比較（GPUなし）【実測＋評価】
+- ユーザー承認：CPU後処理スクリプトと比較動画の作成、品質評価、記録。既存codex/t2-motion-analysisと未コミット変更を維持。元MP4・生成エンジン・GUI・モデル・環境・安全基準・検証済み上限の変更なし。push・PR・マージ・外部APIなし。
+- 新規：flashhead/tools/cpu_stabilization_trial.py、tests_cpu/test_cpu_stabilization_trial.py。66節の中心・目尻線の傾きから、短時間ガウス平滑化との差を速度依存で部分適用。顔の局所ワープ・拡大・フレーム補間なし。弱0.35／中0.65、位置補正上限4.2/7.8px、回転上限0.875/1.625度。端は複製で補完（人工画素の面積も測定）。
+- 保存：outputs/t2/stabilization_test。11.60–13.60秒、44.60–46.20秒、49.00–50.60秒それぞれの補正なし/弱/中と横並び、合計12本。REPORT.md、比較グラフ3枚、results.csv、transforms.csv、再検出ランドマーク、expression_quality.csv、検証JSONも保存。
+- 最大中心移動px（補正なし→弱→中）：12秒10.15→8.74→7.91、45秒10.10→8.94→8.68、49秒6.81→5.48→4.44。12秒の最大2D傾き変化は4.80→4.64→4.41度。yaw/pitchの3D回転は補正していない。
+- 12秒の加速度P95は5.82→4.94→3.96px/frame²。一方49秒の弱は3.59→3.76と悪化。数値改善は一様ではない。
+- 背景の最大移動（12秒）は0.118→3.18→6.03px、P95は0.060→2.01→3.80px。頭を動かす剛体変換で背景にも動きが発生。端の人工補完は最大0.53/0.99%。45秒のぼけ参考指標は約10–12%低下（姿勢・ROIにも影響される参考値）。
+- 目のEAR相関は各区間0.996以上、口MAR相関0.986以上。12秒の閉眼最小検出フレームは補正後1枚差（時間補間なし、画素補間/検出差の可能性）。形状は剛体変換上保持するが画素補間・再圧縮の影響はゼロではない。代表の最終エンコード画像で大きな顔崩れ・黒い欠けなし。通常速度の連続再生・聴感評価はユーザー確認待ち。
+- CPUテスト合格：静止/遅い等速運動は不変、回転直交性・距離保持・補正上限。全12本デコードエラーなし、25fps・50/40/40枚。音声映像の開始0と長さ一致。区間ごとのA/B/C/横並び音声はデコード後完全一致。元PCMとの相関0.999991以上・最大相関のずれ0サンプル。音声は内容を維持しサンプル単位で抜粋、一度AACへ再圧縮して共用。
+- 元動画SHA256は実行前後一致：f9550472aca02e390996fddf0faa3547181e765a348f3ead2f4e5152884ab2fb。
+- 結論：B（一部改善するが副作用が大きい）。正式採用せず、強度を増やす追加調整もしない。次はユーザーの比較再生。背景の揺れが気になるなら本方式を不採用とし、新規GPU承認後のseedのみの対照比較を候補にする。頭だけを切り抜く補正は髪・首・背景の問題があり安易に追加しない。今回の作業は試作・比較までで停止。
+
+
+## 68. 2026-11-02 18:36 JST：PC2のGUI改善を自宅PCで取り込み・実機検証（GPU推論なし）【実測】
+- 開始時codex/t2-motion-analysis、HEAD 2462df8。未コミット文書2件と未追跡解析・試作・CPUテスト5件を保護。変更対象3件も含むコピーとGit差分をチャットwork/gui-home-protectionへ保存しSHA256照合。stash/reset/checkout/cleanなし。66・67節を含む既存文書は全バイトを保持して今回節を追記。
+- git fetch origin後、origin/codex/gui-responsive-pc2=af5be97014905ef31271bc288b127593acb6e51cを確認。変更はgui/static/app.css・gui/start_gui.cmd・gui/start_gui_gpu.cmdのみ。安全コード・GPU処理の変更なし。同じHEADからcodex/gui-responsive-home-validationを作成しcherry-pick --no-commitで競合なく取り込み。対象3ファイルはPC2コミットと一致しステージ済み。今回コミット/push/PR/main/PR #1への変更なし。元ブランチ参照は2462df8のまま。
+- 既存Gradio 5.50.0を使用。両起動スクリプトをプロジェクト外の作業ディレクトリから7862番で起動確認。専用in-app browserタブのみ操作。開始時・終了時7861リスナーなし、7861への停止操作なし。
+- 1920×1080：従来の左右配置・虹色枠・動画・進捗を維持。1366×768：左右配置・入力・ボタン・動画・進捗表示、ボタン重なりなし。390×844：縦配置・入力操作・主要ボタン44px以上。3幅のページclientWidth/scrollWidthは1920/1920、1351/1351、375/375pxでページ全体の横はみ出しなし。長文ステータス・警告は折り返す。
+- 未解決1：保存先はapp.pyの単一行INPUTのため文字列が折り返さない。長い保存先で1366px時clientWidth594/scrollWidth925px、390px時229/925px。欄は収まるが末尾が隠れる。複数行表示への変更が次候補（app.pyを含む別作業）。
+- 未解決2：Gradioがメディアクエリ内の:rootを「.gradio-container.gradio-container-5-50-0-dev0 .contain :root」に書き換え、高さ変数が上書きされない。動画高さは400/180/194px、後2者の意図160/270.08pxを満たさない。#main-row等の実在祖先で--media-hと--img-hを定義する修正を次候補にする。今回はPC2の3ファイルを改変せず保持。
+- 画像選択・チェック・髪切れ警告・顔切り出し自動オン、T2外部音声選択と60秒/1500枚/54チャンク表示に成功。接続テスト20261102-183307_fh_dryrunは22%でGUI停止し「ユーザーの停止」を記録。20261102-183326_fh_dryrunは約47秒で1500枚・60秒を完走、AV差0秒・7検査合格。新しいテストジョブとログ・動画は削除しない。
+- 完成CPUダミー動画の再生0.31→10.16秒、一時停止、muted=true/false・aria-pressed・文言切り替えを確認。再生はミュートで行い、一時停止後に解除。聴感評価は未実施。
+- GPU用GUIの「動画を生成」1段目はコミット残量15.18GiB＜19GiBで開始前検査が拒否。確認パネル成功表示・内部の3幅配置・キャンセルは未検証。基準の変更・差し替えなし。最終生成ボタンは押さず、GPUジョブなし。推論は一度も行っていない。
+- Python AST（app.py/job_manager.py）合格。CSSは実ブラウザで計測。git diff --checkと--cached --check合格。app.py/job_manager.py/fh_worker.py/frame_sink.py/fh_limits.json/run_stage.pyはHEADとの差分なし。GPU安全基準・検証済み上限不変。自分のGUIランチャーと子プロセスだけ終了し、7862リスナー・GPUロック・テスト実行プロセスなしを確認。専用タブを閉じviewportを解除。
+- 元T2のSHA256=f9550472aca02e390996fddf0faa3547181e765a348f3ead2f4e5152884ab2fb不変。未追跡コード5件もハッシュ不変。生成動画・解析・ジョブの既存成果を削除していない。CPU安定化はユーザー方針どおり正式不採用、試作と資料を保存しGUI/標準生成に組み込まない。
+- 保存：outputs/gui_home_validation_20261102/REPORT.md・3幅スクリーンショット・layout-results.json・parsed-responsive-rules.json・playback-result.json・preservation-check.json・起動ログ。次：保存先折り返しと高さ変数の2点を修正後再検証。安全条件を自然に満たす時に確認パネル表示/キャンセルだけを検証（GPU生成不要）。全要件合格としてのGitHub統合は保留。
+
+
+## 69. 2026-11-02 18:51 JST：GUI保存先折り返し・プレビュー高さの2件を修正（GPU・新規動画生成なし）【実測】
+- codex/gui-responsive-home-validation、HEAD2462df8を維持。作業前の文書・対象コード・既存未追跡5件、ステージ/未ステージ差分とindexをチャットwork/gui-fix-protectionへ保存。indexは作業前と同一。既存成果の破棄・stash/reset/clean・コミット/push/PR/main/PR #1の変更なし。
+- 保存先の原因：gr.Textbox(interactive=False,max_lines=1)が単一行disabled INPUTとなり、CSSだけで折り返せず選択にも支障。複数行Textboxだけでもdisabledになるため、既存Gradioのgr.Code(language=None,interactive=False,wrap_lines=True,show_line_numbers=False)へ表示コンポーネントのみ変更。実HTMLはcontenteditable=false/aria-readonly=true。2～12行、CSSで長い文字列を折り返す。独自JSなし、保存先値の組み立て・保存処理・イベント接続は不変。
+- 143文字の実保存先を全文選択→Ctrl+Cで照合し完全一致、追加改行なし。部分選択/コピーも成功。組み込みコピーアイコンは表示されるが、in-app browserのclipboard読出しではアイコン単体のコピー成功を確認できず未検証。確認済みの経路は選択→Ctrl+C。Codeのpostprocessは端の空白を除くが、実際の絶対パス、および日本語・内部空白・長い名前のCPU例では文字列一致。12行を超える極端に長い表示は欄内縦スクロール。
+- 高さの原因：Gradioがメディアクエリ内の:rootを実際には一致しない子孫セレクタへ変換。--media-hと--img-hの定義/上書きを共通祖先#main-rowへ移動。既存動画height/max-heightの!importantを維持し内部スタイルより優先。低いPCはclamp(150px,calc(100vh - 608px),180px)で高さに追従、スマートフォン32vh、中間幅42vh。
+- Gradio5.50.0・7862専用GUIで実測した動画要素の幅×高さpx：1920×1080=589.61×400、1366×768=390.67×160、390×844=231×270.08。プレビュー外枠は611.61×414、412.67×174、253×284.08。追加の高さ追従確認：1366×800で高さ180、390×667で213.44。5ケースともページ/保存先の横はみ出し・ボタン重なりなし。保存先内容高さは主要3幅で48.53/67.80/125.59px、全文が収まる。
+- 画像/外部音声選択、顔チェック/切り出し自動オン、60秒/1500枚表示を再確認。既存CPUダミー動画をミュート再生（約0.28→6.55秒）、一時停止、約29.88秒へシーク、停止中のミュート解除を確認。既存完了ジョブの進捗100%と監視値更新を確認。新規動画/ジョブなし。実行中進捗・ジョブ停止の再テストは行わず、68節の実測を維持。GPU確認パネル成功表示も今回対象外。
+- デザイン維持：白背景、5px虹色アニメーション枠、虹色進捗バー、PC左右/スマートフォン縦配置。GPU生成ボタン・安全確認・ジョブ停止のロジックは未変更。
+- CPU検証合格：Python構文、AST比較で保存先コンポーネント以外同一、パス値保持2例、5サイズの寸法/横幅/ボタン/背景/虹色枠、git diff --check/--cached --check。job_manager/fh_worker/frame_sink/fh_limits/run_stageはHEADとの差分なし。GPU安全監視・検証済み1500枚は不変。
+- 今回変更：gui/app.py、gui/static/app.css、PROJECT_STATUS.md、RESTART_PROMPT.md。既存PC2のステージ3件は維持し、CSSはMM（今回修正は未ステージ）、app.py/文書2件も未ステージ、既存未追跡5件のハッシュ不変。66/67/68節を含む文書の元バイト列を保持し末尾追記。動画・解析・ログの削除なし。
+- 自分のテストGUIのみPIDとコマンドを照合して終了。終了後7861/7862リスナー0、関連実行プロセス0、GPUロックなし。最新ジョブは前回の20261102-183326_fh_dryrunのまま。専用テスト画面終了、viewport解除。7861への操作なし。モデル・Python環境変更なし。
+- 保存：outputs/gui_display_fixes_20261102/REPORT.md、3幅スクリーンショット、layout-results.json、operation-results.json、applied-rules.json、cpu-checks.json、起動ログ。今回の2件は統合可能と判断。ただし68節のGPU確認パネル成功表示など無関係な未検証事項まで合格したとの判断ではない。今回はローカル結果の報告で停止。
