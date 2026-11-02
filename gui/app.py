@@ -452,7 +452,8 @@ with gr.Blocks(title="キャラクター音声同期動画（FlashHead Pro）", 
                 status_html = gr.HTML(status_panel(None, {}, False), elem_id="status-panel")
                 with gr.Row(elem_id="out-path-row", equal_height=True):
                     gr.HTML('<div class="out-path-label">MP4 の保存先</div>', elem_id="out-path-label")
-                    out_path = gr.Textbox(show_label=False, container=False, interactive=False, max_lines=1, elem_id="out-path", scale=8)
+                    out_path = gr.Code(label="MP4 の保存先", language=None, show_label=False, container=False, interactive=False,
+                                      lines=2, max_lines=12, wrap_lines=True, show_line_numbers=False, elem_id="out-path", scale=8)
     # ---- 下：詳細ログと生成履歴（通常は閉じる）----
     with gr.Row(elem_id="bottom-row"):
         with gr.Column(scale=1, min_width=360):
