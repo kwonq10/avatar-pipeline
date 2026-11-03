@@ -43,6 +43,32 @@ def previewable(path):
             pass
     return False
 
+
+def completed_download(st):
+    """Only expose the MP4 identified by a successful, validated server-side job.
+
+    No browser-supplied path is accepted. Resolve junctions/symlinks before
+    checking the existing preview roots; a matching result is required too.
+    """
+    result = st.get("result") or {}
+    out = st.get("output")
+    if st.get("state") != "done" or result.get("ok") is not True or not out:
+        return None
+    ap = os.path.realpath(out)
+    if os.path.splitext(ap)[1].lower() != ".mp4" or not os.path.isfile(ap):
+        return None
+    if os.path.normcase(os.path.realpath(result.get("output") or "")) != os.path.normcase(ap):
+        return None
+    for root in PREVIEW_ROOTS:
+        rp = os.path.realpath(root)
+        try:
+            if os.path.normcase(os.path.commonpath([ap, rp])) == os.path.normcase(rp):
+                return ap
+        except ValueError:
+            pass
+    return None
+
+
 def on_image(path):
     """画像を選んだら、FlashHead の入力の作り方どおりにチェックし、モデルに入る 512×512 のプレビューを出す"""
     if not path:
@@ -262,9 +288,12 @@ def refresh(last=None):
     v_upd = gr.update() if last.get("video", "-") == shown else shown
     h_key = json.dumps(hist, ensure_ascii=False, default=str)
     h_upd = gr.update() if last.get("hist") == h_key else hist
-    last.update(video=shown, hist=h_key)
+    download = completed_download(st)
+    d_upd = (gr.update() if last.get("download", "-") == download else
+             gr.update(value=download, interactive=bool(download)))
+    last.update(video=shown, hist=h_key, download=download)
     return (status_panel(target, st, j is not None), detail_log(target, st), v_upd, path_text,
-            h_upd, gr.update(interactive=j is None), gr.update(interactive=j is not None), gr.update(interactive=bool(GPU_MODE and j is None)), last)
+            h_upd, gr.update(interactive=j is None), gr.update(interactive=j is not None), gr.update(interactive=bool(GPU_MODE and j is None)), last, d_upd)
 
 def start_test(img, aud, name, out_dir, seed, face_crop, last):
     try:
@@ -422,9 +451,12 @@ with gr.Blocks(title="キャラクター音声同期動画（FlashHead Pro）", 
                 with gr.Row(elem_id="out-top", equal_height=False):
                     with gr.Column(scale=5, min_width=300, elem_id="col-video"):
                         gr.Markdown("### ③ 完成動画のプレビュー", elem_classes="sec-head")
-                        video = gr.Video(label="再生・ダウンロード", interactive=False, elem_id="out-video")
-                        gr.HTML('<div class="av-mute-wrap"><button id="av-mute-btn" type="button" aria-pressed="false" disabled>🔊 音声オン</button>'
-                                '<span class="av-mute-note">完成動画の音声だけを切り替えます（MP4 は変更しません）</span></div>', elem_id="av-mute")
+                        video = gr.Video(label="完成動画", interactive=False, show_download_button=False, elem_id="out-video")
+                        with gr.Row(elem_id="preview-actions", equal_height=False):
+                            gr.HTML('<div class="av-mute-wrap"><button id="av-mute-btn" type="button" aria-pressed="false" disabled>🔊 音声オン</button></div>', elem_id="av-mute")
+                            download_btn = gr.DownloadButton("⬇ 完成動画をダウンロード", value=None, interactive=False,
+                                                             variant="primary", elem_id="btn-download", min_width=0)
+                        gr.HTML('<span class="av-mute-note">完成動画の音声だけを切り替えます（MP4 は変更しません）</span>')
                     with gr.Column(scale=4, min_width=280, elem_id="col-settings"):
                         gr.Markdown("### ④ 生成設定と操作", elem_classes="sec-head")
                         with gr.Row(elem_id="set-row"):
@@ -468,7 +500,7 @@ with gr.Blocks(title="キャラクター音声同期動画（FlashHead Pro）", 
     aud.change(on_audio, aud, [aud_info, allow_unv])
     last = gr.State({})
     permit = gr.State(None)                                              # 1回限りの許可の ID（このブラウザのセッションだけ）
-    outs = [status_html, status, video, out_path, hist, test_btn, stop_btn, gen_btn, last]
+    outs = [status_html, status, video, out_path, hist, test_btn, stop_btn, gen_btn, last, download_btn]
     gen_btn.click(prepare_gpu, [img, aud, char_name, out_dir, seed, face_crop, allow_unv, permit], [confirm_box, confirm_md, permit], api_name=False)
     confirm_btn.click(confirm_gpu, [permit, img, aud, char_name, out_dir, seed, face_crop, allow_unv, last],
                       [confirm_box, confirm_md, permit] + outs, api_name=False)
