@@ -1,22 +1,31 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-rem Avatar-Pipeline GUI in GPU generation mode (127.0.0.1:7861 only).
-rem GPU permission is NOT stored anywhere: it exists only while this window runs,
-rem and every job still needs the in-GUI confirmation (one-time permit) and the backend safety checks.
+for /f "tokens=2 delims=:" %%A in ('chcp') do set "GUI_OLD_CP=%%A"
+chcp 65001 >nul
 pushd "%~dp0"
 if errorlevel 1 exit /b 1
 set "PYTHONUTF8=1"
-if not exist ".venv\Scripts\python.exe" (
-    echo [ERROR] GUI Python environment was not found.
-    echo Expected: "%CD%\.venv\Scripts\python.exe"
-    echo See ..\docs\SETUP.md before starting the GUI.
-    popd
-    pause
-    exit /b 1
+if defined AVATAR_GUI_PYTHON (
+    set "GUI_PYTHON=%AVATAR_GUI_PYTHON%"
+) else (
+    set "GUI_PYTHON=%CD%\.venv\Scripts\python.exe"
 )
-".venv\Scripts\python.exe" app.py --gpu-enabled
-
+if not exist "%GUI_PYTHON%" goto missing_python
+"%GUI_PYTHON%" -B tools\launch_gui.py --gpu-enabled
 set "GUI_EXIT_CODE=%ERRORLEVEL%"
-popd
+goto finish
+:missing_python
+echo [起動エラー] GUI用のPython仮想環境が見つかりません。
+
+echo 確認した場所: "%GUI_PYTHON%"
+
+echo 既存環境を使う場合はAVATAR_GUI_PYTHONにGUI用python.exeの絶対パスを指定してください。
+
+echo 自動で環境を作成・変更しません。docs\SETUP.mdの「GUIの起動」を確認してください。
+
+set "GUI_EXIT_CODE=2"
+:finish
 if not "%GUI_EXIT_CODE%"=="0" pause
+popd
+if defined GUI_OLD_CP chcp %GUI_OLD_CP% >nul
 exit /b %GUI_EXIT_CODE%

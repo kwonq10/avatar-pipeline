@@ -13,6 +13,7 @@ os.environ.setdefault("GRADIO_ANALYTICS_ENABLED", "False")
 import argparse
 import gradio as gr
 import job_manager as jm
+from tools.gui_support import gui_port, port_in_use, port_busy_message, require_input, user_error
 
 # GPU 生成モード：起動引数でだけ有効にする（環境変数は使わない・恒久的な設定にしない）
 #   --gpu-enabled   … 「動画を生成」を使える。押すたびにバックエンドが検査して、そのジョブ1回だけの許可（permit）を発行する
@@ -73,7 +74,11 @@ def on_image(path):
     """画像を選んだら、FlashHead の入力の作り方どおりにチェックし、モデルに入る 512×512 のプレビューを出す"""
     if not path:
         return "キャラクター画像が選ばれていません（必須）", [], gr.update()
-    r = jm.check_image(path)
+    try:
+        require_input(path, "キャラクター画像")
+        r = jm.check_image(path)
+    except Exception as exc:
+        return "⛔ " + html.escape(user_error(exc, "画像を読み込み")), [], gr.update()
     i = r.get("info") or {}
     lines = [f"**{LEVEL_LABEL.get(r.get('level'), r.get('level'))}**　大きさ {i.get('size')}・縦横比 {i.get('aspect')}・検出した顔 {i.get('faces_confident', 0)} 個"]
     lines += [f"- {x}" for x in r.get("reasons", [])]
@@ -89,12 +94,18 @@ def on_audio(path):
     if not path:
         return ("音声ファイルが選ばれていません（必須）。作成元は問いません（外部サービス・録音など）。API キーは不要です。",
                 gr.update(value=False, interactive=False))
-    unv = jm.plan_for(jm.audio_seconds(path), "fh_gpu")["unverified"]      # ワーカーと同じ測り方・同じ判定
-    return _audio_text(path), gr.update(value=False, interactive=bool(GPU_MODE and unv))
+    try:
+        require_input(path, "音声ファイル", jm.AUDIO_EXT)
+        unv = jm.plan_for(jm.audio_seconds(path), "fh_gpu")["unverified"]  # 判定は既存バックエンドのまま
+        return _audio_text(path), gr.update(value=False, interactive=bool(GPU_MODE and unv))
+    except Exception as exc:
+        return "⛔ " + html.escape(user_error(exc, "音声を読み込み")), gr.update(value=False, interactive=False)
 
 def _audio_text(path):
     a = jm.audio_info(path)
     sec = jm.audio_seconds(path)                                         # 判定と同じ長さ（変換後の WAV）。表示は 3桁に丸めるだけ
+    if not a.get("codec") or not a.get("sample_rate") or sec <= 0:
+        raise ValueError("音声トラックを読み取れません。別のプレイヤーで再生できる音声を選んでください。")
     note = ""
     if sec < 0.5: note = " ⛔ 短すぎます（0.5秒以上）"
     pl = jm.plan_for(sec, "fh_gpu")
@@ -216,6 +227,8 @@ def status_panel(target, st, running):
         ("コミット残量", _f(headroom, "{:.1f}") + " GiB"),
     ]
     warn = []
+    if running:
+        warn.append("終了する前に「停止」を押し、処理が終了したことを確認してください。ブラウザを閉じるだけではジョブは止まりません。")
     if not running:
         if headroom is not None and headroom < PRE_MIN_HEADROOM_GIB: warn.append(f"コミット残量が {PRE_MIN_HEADROOM_GIB:.0f}GiB 未満（GPU 生成の前に常駐アプリを閉じる）")
         if avail is not None and avail < PRE_MIN_AVAIL_GIB: warn.append(f"空きRAM が {PRE_MIN_AVAIL_GIB:.0f}GiB 未満")
@@ -297,11 +310,15 @@ def refresh(last=None):
 
 def start_test(img, aud, name, out_dir, seed, face_crop, last):
     try:
+        require_input(img, "キャラクター画像")
+        require_input(aud, "音声ファイル", jm.AUDIO_EXT)
+        if out_dir and (not os.path.isabs(out_dir.strip()) or os.path.isfile(out_dir.strip())):
+            raise ValueError("出力フォルダにはファイル名ではなく、フォルダの絶対パスを指定してください。")
         jid = jm.start_job("fh_dryrun", {"image": img, "audio": aud, "character_name": name, "output_dir": (out_dir or "").strip(),
                                           "seed": int(seed), "use_face_crop": bool(face_crop)})
         gr.Info(f"接続テストを開始しました：{jid}")
     except Exception as e:
-        gr.Warning(str(e))
+        gr.Warning(user_error(e))
     return refresh(last)
 
 def stop(last):
@@ -326,7 +343,7 @@ def prepare_gpu(img, aud, name, out_dir, seed, face_crop, allow_unv, old_permit)
     try:
         pid, pl, pre = jm.issue_gpu_permit(_payload(img, aud, name, out_dir, seed, face_crop, allow_unv))
     except Exception as e:
-        gr.Warning(str(e))
+        gr.Warning(user_error(e))
         return hide
     m, s_ = divmod(pl["est_sec"], 60)
     rows = "\n".join(f"| {n} | {'✅' if ok else '⛔'} | {v} |" for n, ok, v in pre["items"])
@@ -345,7 +362,7 @@ def confirm_gpu(permit, img, aud, name, out_dir, seed, face_crop, allow_unv, las
         jid = jm.start_job("fh_gpu", _payload(img, aud, name, out_dir, seed, face_crop, allow_unv), permit=permit)
         gr.Info(("リハーサルを開始しました：" if REHEARSAL else "GPU 生成を開始しました：") + jid)
     except Exception as e:
-        gr.Warning(str(e))
+        gr.Warning(user_error(e))
     return (gr.update(visible=False), "", None) + tuple(refresh(last))
 
 def cancel_gpu(permit):
@@ -496,6 +513,12 @@ with gr.Blocks(title="キャラクター音声同期動画（FlashHead Pro）", 
                 hist = gr.Dataframe(headers=["ジョブ", "種類", "キャラクター", "状態", "進捗", "秒", "VRAM最大MiB", "空きRAM最小GiB", "出力"],
                                     interactive=False, wrap=False, elem_id="history-table")
 
+    with gr.Accordion("終了方法とエラー時の対処", open=False):
+        gr.Markdown("ブラウザのタブを閉じてもGUIサーバーやジョブは終了しません。実行中なら、まず「停止」を押し、停止表示になってからGUIのコンソールでCtrl+Cを押してください。"
+                    "その後コンソールを閉じてください。Pythonをまとめて強制終了しないでください。\n\n"
+                    "読み込みエラーは入力を選び直し、保存エラーは書き込み可能な保存先を確認してください。"
+                    "メモリ不足・高温による拒否は、表示値と案内を確認し、安全基準を下げないでください。")
+
     img.change(on_image, img, [img_check, gal, face_crop])
     aud.change(on_audio, aud, [aud_info, allow_unv])
     last = gr.State({})
@@ -512,19 +535,16 @@ with gr.Blocks(title="キャラクター音声同期動画（FlashHead Pro）", 
 
 def _port_in_use(port):
     """そのポートで、すでに別のプログラム（前に起動した GUI など）が待ち受けているか"""
-    import socket
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(0.5)
-        return s.connect_ex(("127.0.0.1", port)) == 0
+    return port_in_use(port)
 
 if __name__ == "__main__":
-    _port = int(os.environ.get("AVATAR_GUI_PORT", "7861"))
+    try:
+        _port = gui_port()
+    except ValueError as exc:
+        print("[起動エラー] " + str(exc), flush=True)
+        sys.exit(2)
     if _port_in_use(_port):
-        # 前の GUI が動いたままだと、新しい GUI は起動できず、ブラウザには古い GUI が表示され続ける（2026-10-31 の事例）
-        print(f"\n[エラー] ポート {_port} は、すでに別の GUI が使っています。新しい GUI は起動しませんでした。\n"
-              f"  ブラウザの http://127.0.0.1:{_port} に表示されているのは、前に起動した GUI です（古いコードの可能性があります）。\n"
-              "  前の GUI のコンソールのウィンドウを閉じてから、もう一度起動してください。\n"
-              "  ウィンドウが見当たらない場合は、タスクマネージャーで、コマンドラインに app.py を含む python.exe を終了してください。\n", flush=True)
+        print("[起動エラー] " + port_busy_message(_port), flush=True)
         sys.exit(3)
     demo.queue(default_concurrency_limit=1).launch(server_name="127.0.0.1", server_port=_port,
                                                    share=False, inbrowser=False, allowed_paths=PREVIEW_ROOTS, show_api=True)
